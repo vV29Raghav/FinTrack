@@ -56,7 +56,7 @@ Clerk account for authentication (get publishable key)
 
 Getting Started
 1️⃣ Clone the repository
-git clone https://github.com/YOUR_USERNAME/fintrack.git
+git clone https://github.com/vV29Raghav/fintrack.git
 cd fintrack
 
 2️⃣ Install dependencies
@@ -80,7 +80,7 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
 Backend (.env)
-PORT=5000
+PORT=5001
 MONGO_URI=mongodb://localhost:27017/fintrack
 JWT_SECRET=your_jwt_secret
 
@@ -100,7 +100,7 @@ Connected to MongoDB
 
 Test the backend API in browser or Postman:
 
-http://localhost:5000/api/expenses/stats
+http://localhost:5001/api/expenses/stats
 
 5️⃣ Start the frontend
 cd frontend
@@ -135,7 +135,7 @@ Common Issues
 
 1. Axios Network Error
 
-Ensure backend is running at the correct port (5000)
+Ensure backend is running at the correct port (5001)
 
 Check NEXT_PUBLIC_API_URL points to your backend
 
