@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Inbox, FileText, FolderOpen, User, Menu, X } from 'lucide-react';
+import { Home, Inbox, FileText, FolderOpen, User, Menu, X, Sparkles } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { useState } from 'react';
 
@@ -15,6 +15,7 @@ export default function DashboardSidebar() {
     { name: 'Inbox', href: '/dashboard/inbox', icon: Inbox },
     { name: 'Reports', href: '/dashboard/reports', icon: FileText },
     { name: 'Workspace', href: '/dashboard/workspace', icon: FolderOpen },
+    { name: 'Features', href: '/dashboard/features', icon: Sparkles, badge: 'New' },
     { name: 'Account', href: '/dashboard/account', icon: User },
   ];
 
@@ -57,7 +58,7 @@ export default function DashboardSidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 relative ${
                     isActive(item.href)
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
                       : 'text-gray-700 hover:bg-gray-100'
@@ -65,6 +66,11 @@ export default function DashboardSidebar() {
                 >
                   <Icon size={20} />
                   <span className="font-medium">{item.name}</span>
+                  {item.badge && (
+                    <span className="ml-auto text-xs px-2 py-0.5 bg-green-500 text-white rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

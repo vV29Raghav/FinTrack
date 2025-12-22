@@ -4,6 +4,70 @@ const Workspace = require('../models/Workspace');
 const User = require('../models/User');
 
 // ======================
+// Send workspace invite via email
+// ======================
+router.post('/invite', async (req, res) => {
+  try {
+    const { email, workspaceName, workspaceId, role, invitedBy } = req.body;
+
+    if (!email || !workspaceName || !workspaceId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, workspace name, and workspace ID are required',
+      });
+    }
+
+    const transporter = req.app.get('transporter');
+    const frontendUrl = req.app.get('frontendUrl');
+    const inviteLink = `${frontendUrl}/dashboard/workspace/join?workspaceId=${workspaceId}&role=${role || 'member'}`;
+
+    // If email is configured, send email
+    if (transporter) {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: `You've been invited to join ${workspaceName} on FinTrack`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Workspace Invitation</h2>
+            <p>Hello!</p>
+            <p><strong>${invitedBy}</strong> has invited you to join the workspace <strong>${workspaceName}</strong> on FinTrack.</p>
+            <p>Your role will be: <strong>${role || 'Member'}</strong></p>
+            <p>Click the button below to accept the invitation and join the workspace:</p>
+            <a href="${inviteLink}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 8px; margin: 20px 0;">Join Workspace</a>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="color: #6b7280; word-break: break-all;">${inviteLink}</p>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
+          </div>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.json({
+        success: true,
+        message: 'Invitation email sent successfully',
+        inviteLink,
+      });
+    } else {
+      // Email not configured, return invite link only
+      res.json({
+        success: true,
+        message: 'Email service not configured. Share this link with the user:',
+        inviteLink,
+      });
+    }
+  } catch (error) {
+    console.error('Error sending invite:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sending invitation',
+      error: error.message,
+    });
+  }
+});
+
+// ======================
 // Create a workspace
 // ======================
 router.post('/workspaces', async (req, res) => {

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Expense = require('../models/Expense');
+const upload = require('../config/multer');
+const { suggestCategory } = require('../utils/categorization');
 
 // ======================
 // GET all expenses
@@ -41,18 +43,26 @@ router.get('/stats', async (req, res) => {
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
     const monthly = await Expense.aggregate([
       { $match: { ...match, date: { $gte: startOfMonth } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
 
+    // Calculate average daily spend for current month
+    const today = new Date();
+    const daysInMonth = today.getDate(); // Days passed in current month
+    const monthlyTotal = monthly[0]?.total || 0;
+    const averageDaily = daysInMonth > 0 ? (monthlyTotal / daysInMonth).toFixed(2) : '0.00';
+
     res.json({
       success: true,
       stats: {
-        totalExpenses: total[0]?.total || 0,
-        thisMonth: monthly[0]?.total || 0,
+        totalExpenses: (total[0]?.total || 0).toFixed(2),
+        thisMonth: monthlyTotal.toFixed(2),
         pendingApprovals,
+        averageDaily,
       }
     });
   } catch (error) {
@@ -159,6 +169,67 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true, message: 'Expense deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete expense' });
+  }
+});
+
+// ======================
+// UPLOAD receipt/attachment
+// ======================
+router.post('/:id/upload', upload.single('receipt'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) {
+      return res.status(404).json({ success: false, message: 'Expense not found' });
+    }
+
+    // Add file path to attachments
+    const filePath = `/uploads/${req.file.filename}`;
+    expense.attachments = expense.attachments || [];
+    expense.attachments.push(filePath);
+    await expense.save();
+
+    res.json({
+      success: true,
+      message: 'File uploaded successfully',
+      file: filePath,
+      expense,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload file',
+      error: error.message,
+    });
+  }
+});
+
+// ======================
+// SUGGEST category for expense
+// ======================
+router.post('/suggest-category', (req, res) => {
+  try {
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Expense name is required' });
+    }
+    
+    const suggestedCategory = suggestCategory(name, description);
+    
+    res.json({
+      success: true,
+      suggestedCategory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to suggest category',
+      error: error.message,
+    });
   }
 });
 

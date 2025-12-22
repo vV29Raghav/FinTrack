@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useState, useEffect } from 'react';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { Plus, Users, Settings, Mail, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function WorkspacePage() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteData, setInviteData] = useState({
@@ -17,8 +18,53 @@ export default function WorkspacePage() {
     workspaceName: 'My Workspace',
     workspaceId: 'workspace-1'
   });
+  const [subscription, setSubscription] = useState({ tier: 'free' });
+  const [workspaceCount, setWorkspaceCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (user) {
+      fetchSubscription();
+      fetchWorkspaces();
+    }
+  }, [user]);
+
+  const fetchSubscription = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/stripe/subscription/${user?.id}`);
+      if (response.data?.success) {
+        setSubscription(response.data.subscription);
+      }
+    } catch (err) {
+      console.error('Error fetching subscription:', err);
+    }
+  };
+
+  const fetchWorkspaces = async () => {
+    try {
+      const token = await getToken();
+      const response = await axios.get(`${API_URL}/workspaces/user/${user?.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data?.success) {
+        setWorkspaceCount(response.data.workspaces?.length || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching workspaces:', err);
+    }
+  };
+
+  const canCreateWorkspace = () => {
+    if (subscription.tier === 'free' && workspaceCount >= 1) {
+      return false;
+    }
+    if (subscription.tier === 'premium' && workspaceCount >= 5) {
+      return false;
+    }
+    // Enterprise has unlimited workspaces
+    return true;
+  };
 
   const workspaces = [
     {
@@ -51,24 +97,29 @@ export default function WorkspacePage() {
     setMessage({ type: '', text: '' });
 
     try {
+      const token = await getToken();
       const response = await axios.post(`${API_URL}/workspaces/invite`, {
         email: inviteData.email,
         workspaceName: inviteData.workspaceName,
         workspaceId: inviteData.workspaceId,
         role: inviteData.role,
         invitedBy: user?.fullName || user?.firstName || 'Team Admin'
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.data.success) {
         setMessage({ 
           type: 'success', 
-          text: 'Invitation sent successfully! The user will receive an email with a link to join.'
+          text: response.data.inviteLink 
+            ? `Invitation sent! Link: ${response.data.inviteLink}`
+            : 'Invitation sent successfully! The user will receive an email with a link to join.'
         });
         setInviteData({ ...inviteData, email: '' });
         setTimeout(() => {
           setShowInviteForm(false);
           setMessage({ type: '', text: '' });
-        }, 3000);
+        }, 5000);
       }
     } catch (error) {
       setMessage({ 
@@ -80,6 +131,17 @@ export default function WorkspacePage() {
     }
   };
 
+  const handleCreateWorkspace = () => {
+    if (!canCreateWorkspace()) {
+      const limitMessage = subscription.tier === 'free'
+        ? 'Free plan allows only 1 workspace. Upgrade to Premium for up to 5 workspaces or Enterprise for unlimited workspaces.'
+        : 'You have reached your workspace limit. Upgrade to Enterprise for unlimited workspaces.';
+      setMessage({ type: 'error', text: limitMessage });
+      return;
+    }
+    setShowCreateForm(true);
+  };
+
   return (
     <div className="space-y-6">
 
@@ -87,10 +149,15 @@ export default function WorkspacePage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Workspace</h1>
-          <p className="text-gray-600">Manage your workspaces and team members</p>
+          <p className="text-gray-600">
+            Manage your workspaces and team members
+            {subscription.tier === 'free' && ` (${workspaceCount}/1 workspace used)`}
+            {subscription.tier === 'premium' && ` (${workspaceCount}/5 workspaces used)`}
+            {subscription.tier === 'enterprise' && ` (${workspaceCount} workspaces - Unlimited)`}
+          </p>
         </div>
         <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
+          onClick={handleCreateWorkspace}
           className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-shadow flex items-center gap-2"
         >
           <Plus size={20} />
