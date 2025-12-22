@@ -1,10 +1,11 @@
 'use client';
 
 import { useUser, useAuth } from '@clerk/nextjs';
-import { DollarSign, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Activity, Edit2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import AddExpenseModal from '@/components/dashboard/AddExpenseModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 console.log('API_URL:', API_URL);
@@ -24,6 +25,9 @@ export default function DashboardPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingExpenses, setLoadingExpenses] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -67,6 +71,35 @@ export default function DashboardPage() {
     } finally {
       setLoadingExpenses(false);
     }
+  };
+
+  const handleDeleteExpense = async (expenseId) => {
+    if (!confirm('Are you sure you want to delete this expense?')) return;
+    
+    setDeletingId(expenseId);
+    try {
+      const token = await getToken();
+      const response = await axios.delete(`${API_URL}/expenses/${expenseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (response.data?.success) {
+        // Refresh both stats and expenses after deletion
+        fetchStats();
+        fetchRecentExpenses();
+      }
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+      setError('Failed to delete expense');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleExpenseSuccess = () => {
+    // Refresh both stats and expenses after adding/updating
+    fetchStats();
+    fetchRecentExpenses();
   };
 
   const statsData = [
@@ -190,19 +223,38 @@ export default function DashboardPage() {
                     {new Date(expense.date).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">${expense.amount}</p>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      expense.status === 'approved'
-                        ? 'bg-green-100 text-green-700'
-                        : expense.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {expense.status}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">${expense.amount}</p>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        expense.status === 'approved'
+                          ? 'bg-green-100 text-green-700'
+                          : expense.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {expense.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link 
+                      href={`/dashboard/reports?edit=${expense._id}`}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit expense"
+                    >
+                      <Edit2 size={16} />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteExpense(expense._id)}
+                      disabled={deletingId === expense._id}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Delete expense"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -212,13 +264,13 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Link
-          href="/dashboard/reports"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow"
+        <button
+          onClick={() => setShowAddExpenseModal(true)}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow text-left"
         >
           <h3 className="text-lg font-bold mb-2">Add New Expense</h3>
           <p className="text-sm opacity-90">Record a new expense quickly</p>
-        </Link>
+        </button>
         <Link
           href="/dashboard/reports"
           className="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow"
@@ -234,6 +286,15 @@ export default function DashboardPage() {
           <p className="text-sm opacity-90">Add team members</p>
         </Link>
       </div>
+
+      {/* Add Expense Modal */}
+      <AddExpenseModal
+        isOpen={showAddExpenseModal}
+        onClose={() => setShowAddExpenseModal(false)}
+        userId={user?.id}
+        getToken={getToken}
+        onSuccess={handleExpenseSuccess}
+      />
     </div>
   );
 }

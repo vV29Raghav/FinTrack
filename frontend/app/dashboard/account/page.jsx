@@ -2,16 +2,75 @@
 
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CreditCard, Crown, CheckCircle, LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 export default function AccountPage() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [subscription, setSubscription] = useState({ tier: 'free', isActive: false });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (user) {
+      fetchSubscription();
+    }
+
+    // Check for payment success/cancel
+    if (searchParams.get('success')) {
+      setMessage({ type: 'success', text: 'Subscription activated successfully!' });
+    } else if (searchParams.get('canceled')) {
+      setMessage({ type: 'error', text: 'Payment was canceled.' });
+    }
+  }, [user, searchParams]);
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/stripe/subscription/${user?.id}`);
+      if (response.data?.success) {
+        setSubscription(response.data.subscription);
+      }
+    } catch (err) {
+      console.error('Error fetching subscription:', err);
+    }
+  };
+
+  const handleUpgrade = async (plan) => {
+    if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+      setMessage({ type: 'error', text: 'Stripe is not configured. Please contact support.' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/stripe/create-checkout-session`, {
+        userId: user?.id,
+        plan,
+        successUrl: `${window.location.origin}/dashboard/account?success=true`,
+        cancelUrl: `${window.location.origin}/dashboard/account?canceled=true`,
+      });
+
+      if (response.data?.success && response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to start checkout. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isLoaded) {
@@ -28,7 +87,8 @@ export default function AccountPage() {
       price: '$0',
       period: 'forever',
       features: ['Up to 50 expenses/month', 'Basic reporting', '1 workspace', 'Email support'],
-      current: true,
+      current: subscription.tier === 'free',
+      plan: 'free',
     },
     {
       name: 'Premium',
@@ -42,7 +102,8 @@ export default function AccountPage() {
         'Custom categories',
         'Export to CSV/PDF',
       ],
-      current: false,
+      current: subscription.tier === 'premium',
+      plan: 'premium',
     },
     {
       name: 'Enterprise',
@@ -56,7 +117,8 @@ export default function AccountPage() {
         'Dedicated account manager',
         'Custom integrations',
       ],
-      current: false,
+      current: subscription.tier === 'enterprise',
+      plan: 'enterprise',
     },
   ];
 
@@ -67,6 +129,13 @@ export default function AccountPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Account Settings</h1>
         <p className="text-gray-600">Manage your subscription and account preferences</p>
       </div>
+
+      {/* Success/Error Message */}
+      {message.text && (
+        <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          {message.text}
+        </div>
+      )}
 
       {/* User Info */}
       <div className="bg-white rounded-xl shadow-md p-6">
@@ -94,12 +163,18 @@ export default function AccountPage() {
               <Crown className="text-blue-600" size={24} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Free Plan</h3>
-              <p className="text-sm text-gray-600">Active subscription</p>
+              <h3 className="text-lg font-bold text-gray-900 capitalize">{subscription.tier} Plan</h3>
+              <p className="text-sm text-gray-600">
+                {subscription.isActive && subscription.endDate
+                  ? `Active until ${new Date(subscription.endDate).toLocaleDateString()}`
+                  : 'Active subscription'}
+              </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">$0</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {subscription.tier === 'premium' ? '$19' : subscription.tier === 'enterprise' ? '$49' : '$0'}
+            </p>
             <p className="text-sm text-gray-600">per month</p>
           </div>
         </div>
@@ -134,14 +209,15 @@ export default function AccountPage() {
                 ))}
               </ul>
               <button
+                onClick={() => handleUpgrade(plan.plan)}
+                disabled={plan.current || loading}
                 className={`w-full py-3 rounded-lg font-medium transition-colors ${
                   plan.current
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
-                disabled={plan.current}
               >
-                {plan.current ? 'Current Plan' : 'Upgrade'}
+                {plan.current ? 'Current Plan' : loading ? 'Processing...' : 'Upgrade'}
               </button>
             </div>
           ))}
