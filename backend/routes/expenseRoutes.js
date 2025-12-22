@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Expense = require('../models/Expense');
 const upload = require('../config/multer');
+const { suggestCategory } = require('../utils/categorization');
 
 // ======================
 // GET all expenses
@@ -201,6 +202,32 @@ router.post('/:id/upload', upload.single('receipt'), async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to upload file',
+      error: error.message,
+    });
+  }
+});
+
+// ======================
+// SUGGEST category for expense
+// ======================
+router.post('/suggest-category', (req, res) => {
+  try {
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Expense name is required' });
+    }
+    
+    const suggestedCategory = suggestCategory(name, description);
+    
+    res.json({
+      success: true,
+      suggestedCategory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to suggest category',
       error: error.message,
     });
   }

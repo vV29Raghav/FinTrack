@@ -16,11 +16,37 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [suggestedCategory, setSuggestedCategory] = useState('');
 
   if (!isOpen) return null;
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Auto-suggest category when name changes
+    if (name === 'name' && value.length > 3) {
+      suggestCategoryForExpense(value, formData.description);
+    }
+  };
+
+  const suggestCategoryForExpense = async (name, description) => {
+    try {
+      const response = await axios.post(`${API_URL}/expenses/suggest-category`, {
+        name,
+        description,
+      });
+      if (response.data?.success && response.data.suggestedCategory) {
+        setSuggestedCategory(response.data.suggestedCategory);
+      }
+    } catch (err) {
+      console.error('Error suggesting category:', err);
+    }
+  };
+
+  const applySuggestedCategory = () => {
+    setFormData({ ...formData, category: suggestedCategory });
+    setSuggestedCategory('');
   };
 
   const handleSubmit = async (e) => {
@@ -145,6 +171,20 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category <span className="text-red-500">*</span>
                 </label>
+                {suggestedCategory && suggestedCategory !== formData.category && (
+                  <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                    <span className="text-sm text-blue-700">
+                      💡 Suggested: <strong>{suggestedCategory}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={applySuggestedCategory}
+                      className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Use This
+                    </button>
+                  </div>
+                )}
                 <select
                   name="category"
                   value={formData.category}
