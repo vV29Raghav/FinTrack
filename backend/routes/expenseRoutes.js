@@ -3,6 +3,47 @@ const router = express.Router();
 const Expense = require('../models/Expense');
 
 // ======================
+// SUGGEST CATEGORY (🔥 MUST BE FIRST)
+// ======================
+router.post('/suggest-category', (req, res) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Expense name is required',
+      });
+    }
+
+    // Simple rule-based suggestion
+    const lower = name.toLowerCase();
+
+    let suggestedCategory = 'Other';
+
+    if (lower.includes('food') || lower.includes('meal') || lower.includes('restaurant')) {
+      suggestedCategory = 'Food';
+    } else if (lower.includes('uber') || lower.includes('taxi') || lower.includes('bus')) {
+      suggestedCategory = 'Transport';
+    } else if (lower.includes('rent')) {
+      suggestedCategory = 'Rent';
+    } else if (lower.includes('electric') || lower.includes('water') || lower.includes('internet')) {
+      suggestedCategory = 'Utilities';
+    }
+
+    res.json({
+      success: true,
+      suggestedCategory,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to suggest category',
+    });
+  }
+});
+
+// ======================
 // GET all expenses
 // ======================
 router.get('/', async (req, res) => {
@@ -14,15 +55,15 @@ router.get('/', async (req, res) => {
     if (workspaceId) query.workspaceId = workspaceId;
     if (status) query.status = status;
 
-    const expenses = await Expense.find(query).sort({ date: -1 }).lean();
+    const expenses = await Expense.find(query).sort({ date: -1 });
     res.json({ success: true, expenses });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to fetch expenses' });
   }
 });
 
 // ======================
-// GET expense statistics
+// GET stats
 // ======================
 router.get('/stats', async (req, res) => {
   try {
@@ -31,7 +72,7 @@ router.get('/stats', async (req, res) => {
 
     const total = await Expense.aggregate([
       { $match: match },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
 
     const pendingApprovals = await Expense.countDocuments({
@@ -44,7 +85,7 @@ router.get('/stats', async (req, res) => {
 
     const monthly = await Expense.aggregate([
       { $match: { ...match, date: { $gte: startOfMonth } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
 
     res.json({
@@ -53,9 +94,9 @@ router.get('/stats', async (req, res) => {
         totalExpenses: total[0]?.total || 0,
         thisMonth: monthly[0]?.total || 0,
         pendingApprovals,
-      }
+      },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to fetch statistics' });
   }
 });
@@ -65,36 +106,10 @@ router.get('/stats', async (req, res) => {
 // ======================
 router.post('/', async (req, res) => {
   try {
-    const {
-      name,
-      amount,
-      date,
-      category,
-      description,
-      userId,
-      workspaceId,
-      submittedBy,
-    } = req.body;
-
-    if (!name || !amount || !date || !category || !userId) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-
-    const expense = new Expense({
-      name,
-      amount,
-      date,
-      category,
-      description,
-      userId,
-      workspaceId,
-      submittedBy: submittedBy || userId,
-      status: 'pending',
-    });
-
+    const expense = new Expense(req.body);
     await expense.save();
     res.status(201).json({ success: true, expense });
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to create expense' });
   }
 });
@@ -104,46 +119,11 @@ router.post('/', async (req, res) => {
 // ======================
 router.put('/:id', async (req, res) => {
   try {
-    const expense = await Expense.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
-    }
-
+    const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!expense) return res.status(404).json({ success: false });
     res.json({ success: true, expense });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update expense' });
-  }
-});
-
-// ======================
-// APPROVE / REJECT expense
-// ======================
-router.patch('/:id/status', async (req, res) => {
-  try {
-    const { status, approvedBy } = req.body;
-
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
-    }
-
-    const expense = await Expense.findByIdAndUpdate(
-      req.params.id,
-      { status, approvedBy },
-      { new: true }
-    );
-
-    if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
-    }
-
-    res.json({ success: true, expense });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update status' });
+  } catch {
+    res.status(500).json({ success: false });
   }
 });
 
@@ -153,12 +133,10 @@ router.patch('/:id/status', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
-    if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
-    }
-    res.json({ success: true, message: 'Expense deleted' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to delete expense' });
+    if (!expense) return res.status(404).json({ success: false });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ success: false });
   }
 });
 

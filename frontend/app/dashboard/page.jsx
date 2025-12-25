@@ -1,239 +1,185 @@
 'use client';
 
 import { useUser, useAuth } from '@clerk/nextjs';
-import { DollarSign, TrendingUp, TrendingDown, Activity } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { DollarSign, PiggyBank, Activity, TrendingDown } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 
+import AddExpenseModal from '../../components/dashboard/AddExpenseModal';
+import SalaryModal from '../../components/dashboard/SalaryModal';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-console.log('API_URL:', API_URL);
 
 export default function DashboardPage() {
   const { user } = useUser();
   const { getToken } = useAuth();
 
-  const [stats, setStats] = useState({
-    totalExpenses: '0.00',
-    thisMonth: '0.00',
-    pendingApprovals: 0,
-    averageDaily: '0.00',
-  });
-
-  const [recentExpenses, setRecentExpenses] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [loadingExpenses, setLoadingExpenses] = useState(true);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [showSalaryModal, setShowSalaryModal] = useState(false);
   const [error, setError] = useState(null);
 
+  // ============================
+  // FETCH EXPENSES
+  // ============================
   useEffect(() => {
-    if (user) {
-      fetchStats();
-      fetchRecentExpenses();
-    }
+    if (!user) return;
+    fetchExpenses();
   }, [user]);
 
-  const fetchStats = async () => {
+  const fetchExpenses = async () => {
     try {
-      setLoadingStats(true);
+      setLoading(true);
       const token = await getToken();
-      const response = await axios.get(`${API_URL}/expenses/stats`, {
+      const res = await axios.get(`${API_URL}/expenses`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { userId: user?.id },
+        params: { userId: user.id },
       });
-      if (response.data?.success) setStats(response.data.stats);
-      else setError('Failed to fetch stats');
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-      setError('Error fetching stats');
+      if (res.data?.success) setExpenses(res.data.expenses);
+    } catch {
+      setError('Failed to load expenses');
     } finally {
-      setLoadingStats(false);
+      setLoading(false);
     }
   };
 
-  const fetchRecentExpenses = async () => {
-    try {
-      setLoadingExpenses(true);
-      const token = await getToken();
-      const response = await axios.get(`${API_URL}/expenses`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { userId: user?.id },
-      });
-      if (response.data?.success)
-        setRecentExpenses(response.data.expenses?.slice(0, 4) || []);
-      else setError('Failed to fetch expenses');
-    } catch (err) {
-      console.error('Error fetching expenses:', err);
-      setError('Error fetching expenses');
-    } finally {
-      setLoadingExpenses(false);
-    }
-  };
+  // ============================
+  // SALARY + SAVINGS
+  // ============================
+  const salary = Number(user?.unsafeMetadata?.salary || 0);
+  const savings = Number(user?.unsafeMetadata?.savings || 0);
+  const usableMonthly = salary - savings;
 
-  const statsData = [
+  const now = new Date();
+  const today = now.getDate();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // ============================
+  // CALCULATIONS
+  // ============================
+  const totalSpentThisMonth = useMemo(() => {
+    return expenses
+      .filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === month && d.getFullYear() === year;
+      })
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+  }, [expenses]);
+
+  const remainingMonthly = usableMonthly - totalSpentThisMonth;
+  const remainingDays = Math.max(daysInMonth - today + 1, 1);
+  const dailyBudget = remainingMonthly / remainingDays;
+
+  const todaySpent = useMemo(() => {
+    const todayStr = now.toISOString().split('T')[0];
+    return expenses
+      .filter(e => e.date.startsWith(todayStr))
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+  }, [expenses]);
+
+  const todayLeft = dailyBudget - todaySpent;
+
+  // ============================
+  // STATS CARDS
+  // ============================
+  const stats = [
     {
-      name: 'Total Expenses',
-      value: `$${stats.totalExpenses}`,
-      change: '0%',
+      title: 'Monthly Salary',
+      value: `$${usableMonthly.toFixed(2)}`,
       icon: DollarSign,
-      trend: 'up',
       bg: 'bg-blue-100',
       text: 'text-blue-600',
     },
     {
-      name: 'This Month',
-      value: `$${stats.thisMonth}`,
-      change: '+0%',
-      icon: TrendingUp,
-      trend: 'up',
+      title: 'Savings',
+      value: `$${savings.toFixed(2)}`,
+      icon: PiggyBank,
       bg: 'bg-green-100',
       text: 'text-green-600',
     },
     {
-      name: 'Pending Approvals',
-      value: stats.pendingApprovals,
-      change: '0%',
+      title: 'Today Salary Left',
+      value: `$${todayLeft.toFixed(2)}`,
       icon: Activity,
-      trend: 'down',
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-600',
+      bg: todayLeft >= 0 ? 'bg-purple-100' : 'bg-red-100',
+      text: todayLeft >= 0 ? 'text-purple-600' : 'text-red-600',
     },
     {
-      name: 'Average Daily',
-      value: `$${stats.averageDaily}`,
-      change: '0%',
+      title: 'Daily Budget',
+      value: `$${dailyBudget.toFixed(2)}`,
       icon: TrendingDown,
-      trend: 'up',
-      bg: 'bg-purple-100',
-      text: 'text-purple-600',
+      bg: 'bg-yellow-100',
+      text: 'text-yellow-600',
     },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Welcome Section */}
+      {/* HEADER */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {user?.firstName || 'User'}! 👋
+        <h1 className="text-3xl font-bold">
+          Welcome back, {user?.firstName || 'User'} 👋
         </h1>
-        <p className="text-gray-600">
-          Here's what's happening with your expenses today.
-        </p>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+        <p className="text-gray-600">Salary-based smart expense tracking</p>
+        {error && <p className="text-red-600 mt-2">{error}</p>}
       </div>
 
-      {/* Stats Grid */}
+      {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {loadingStats
-          ? Array(4)
-              .fill(0)
-              .map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-xl shadow-md p-6 animate-pulse"
-                >
-                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-6 bg-gray-200 rounded mb-1"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ))
-          : statsData.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.name}
-                  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.bg}`}
-                    >
-                      <Icon className={stat.text} size={24} />
-                    </div>
-                    <span
-                      className={`text-sm font-medium ${
-                        stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {stat.change}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                    {stat.value}
-                  </h3>
-                  <p className="text-sm text-gray-600">{stat.name}</p>
-                </div>
-              );
-            })}
+        {stats.map(stat => (
+          <div key={stat.title} className="bg-white rounded-xl shadow-md p-6">
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.bg}`}>
+              <stat.icon className={stat.text} size={24} />
+            </div>
+            <h3 className="text-2xl font-bold mt-3">{stat.value}</h3>
+            <p className="text-sm text-gray-600">{stat.title}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Recent Expenses */}
+      {/* REMAINING MONTHLY */}
       <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Recent Expenses
-        </h2>
-        {loadingExpenses ? (
-          <div className="text-center py-8 text-gray-500">Loading...</div>
-        ) : recentExpenses.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No expenses yet. Create your first expense to get started!
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {recentExpenses.map((expense) => (
-              <div
-                key={expense._id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div>
-                  <h4 className="font-medium text-gray-900">{expense.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    {new Date(expense.date).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">${expense.amount}</p>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      expense.status === 'approved'
-                        ? 'bg-green-100 text-green-700'
-                        : expense.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {expense.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <h2 className="text-xl font-bold mb-2">Remaining Monthly Balance</h2>
+        <p className={`text-2xl font-bold ${remainingMonthly >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          ${remainingMonthly.toFixed(2)}
+        </p>
       </div>
 
-      {/* Quick Actions */}
+      {/* ACTIONS */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Link
-          href="/dashboard/reports"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow"
+        <button
+          onClick={() => setShowAddExpenseModal(true)}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-xl"
         >
-          <h3 className="text-lg font-bold mb-2">Add New Expense</h3>
-          <p className="text-sm opacity-90">Record a new expense quickly</p>
-        </Link>
-        <Link
-          href="/dashboard/reports"
-          className="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow"
+          Add Expense
+        </button>
+
+        <button
+          onClick={() => setShowSalaryModal(true)}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-xl"
         >
-          <h3 className="text-lg font-bold mb-2">Generate Report</h3>
-          <p className="text-sm opacity-90">Create expense reports</p>
-        </Link>
-        <Link
-          href="/dashboard/workspace"
-          className="bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl p-6 hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-lg font-bold mb-2">Invite Team</h3>
-          <p className="text-sm opacity-90">Add team members</p>
-        </Link>
+          Set Salary & Savings
+        </button>
+
       </div>
+
+      {/* MODALS */}
+      <AddExpenseModal
+        isOpen={showAddExpenseModal}
+        onClose={() => setShowAddExpenseModal(false)}
+        userId={user?.id}
+        getToken={getToken}
+        onSuccess={fetchExpenses}
+      />
+
+      <SalaryModal
+        isOpen={showSalaryModal}
+        onClose={() => setShowSalaryModal(false)}
+      />
     </div>
   );
 }

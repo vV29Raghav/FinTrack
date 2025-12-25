@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Inbox, FileText, FolderOpen, User, Menu, X } from 'lucide-react';
+import { Home, Inbox, FileText, FolderOpen, User, Menu, X, Sparkles } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { useState } from 'react';
 
@@ -12,9 +12,8 @@ export default function DashboardSidebar() {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Inbox', href: '/dashboard/inbox', icon: Inbox },
-    { name: 'Reports', href: '/dashboard/reports', icon: FileText },
     { name: 'Workspace', href: '/dashboard/workspace', icon: FolderOpen },
+    { name: 'Features', href: '/dashboard/features', icon: Sparkles, badge: 'New' },
     { name: 'Account', href: '/dashboard/account', icon: User },
   ];
 

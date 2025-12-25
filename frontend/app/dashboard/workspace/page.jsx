@@ -1,244 +1,246 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Plus, Users, Settings, Mail, Trash2 } from 'lucide-react';
+import { Plus, Mail } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function WorkspacePage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
+
+  const [workspaces, setWorkspaces] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [inviteData, setInviteData] = useState({
-    email: '',
-    role: 'Member',
-    workspaceName: 'My Workspace',
-    workspaceId: 'workspace-1'
+  const [showJoinForm, setShowJoinForm] = useState(false);
+
+  const [createData, setCreateData] = useState({
+    name: '',
+    description: '',
   });
+
+  const [joinData, setJoinData] = useState({
+    workspaceId: '',
+    role: 'member',
+  });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  const workspaces = [
-    {
-      id: 1,
-      name: 'Marketing Team',
-      members: 8,
-      role: 'Admin',
-      expenses: 45,
-      total: '$12,345',
-    },
-    {
-      id: 2,
-      name: 'Sales Department',
-      members: 12,
-      role: 'Member',
-      expenses: 67,
-      total: '$23,456',
-    },
-  ];
+  /* =========================
+     FETCH USER WORKSPACES
+  ========================== */
+  useEffect(() => {
+    if (!isLoaded || !user) return;
 
-  const members = [
-    { name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active' },
-    { name: 'Jane Smith', email: 'jane@example.com', role: 'Member', status: 'Active' },
-    { name: 'Mike Johnson', email: 'mike@example.com', role: 'Viewer', status: 'Pending' },
-  ];
+    const fetchWorkspaces = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/workspaces/user/${user.id}`
+        );
+        setWorkspaces(res.data.workspaces || []);
+      } catch (err) {
+        console.error('Fetch workspaces error:', err);
+        setWorkspaces([]);
+      }
+    };
 
-  const handleInviteSubmit = async (e) => {
+    fetchWorkspaces();
+  }, [isLoaded, user]);
+
+  /* =========================
+     CREATE WORKSPACE
+  ========================== */
+  const handleCreateWorkspace = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post(`${API_URL}/workspaces/invite`, {
-        email: inviteData.email,
-        workspaceName: inviteData.workspaceName,
-        workspaceId: inviteData.workspaceId,
-        role: inviteData.role,
-        invitedBy: user?.fullName || user?.firstName || 'Team Admin'
+      const res = await axios.post(`${API_URL}/workspaces`, {
+        name: createData.name,
+        description: createData.description,
+        ownerId: user.id,
       });
 
-      if (response.data.success) {
-        setMessage({ 
-          type: 'success', 
-          text: 'Invitation sent successfully! The user will receive an email with a link to join.'
-        });
-        setInviteData({ ...inviteData, email: '' });
-        setTimeout(() => {
-          setShowInviteForm(false);
-          setMessage({ type: '', text: '' });
-        }, 3000);
-      }
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Error sending invitation. Please try again.'
+      setWorkspaces((prev) => [...prev, res.data.workspace]);
+      setCreateData({ name: '', description: '' });
+      setShowCreateForm(false);
+
+      setMessage({
+        type: 'success',
+        text: 'Workspace created successfully',
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to create workspace',
       });
     } finally {
       setLoading(false);
     }
   };
 
+  /* =========================
+     JOIN WORKSPACE
+  ========================== */
+  const handleJoinWorkspace = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const res = await axios.post(`${API_URL}/workspaces/join`, {
+        workspaceId: joinData.workspaceId,
+        userId: user.id,
+        role: joinData.role,
+      });
+
+      setWorkspaces((prev) => [...prev, res.data.workspace]);
+      setShowJoinForm(false);
+
+      setMessage({
+        type: 'success',
+        text: 'Joined workspace successfully',
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'Failed to join workspace',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isLoaded) return null;
+
   return (
     <div className="space-y-6">
-
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Workspace</h1>
-          <p className="text-gray-600">Manage your workspaces and team members</p>
+          <h1 className="text-3xl font-bold">Workspaces</h1>
+          <p className="text-gray-600">Manage your team workspaces</p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-shadow flex items-center gap-2"
-        >
-          <Plus size={20} />
-          Create Workspace
-        </button>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowJoinForm(!showJoinForm)}
+            className="px-4 py-2 border rounded-lg flex items-center gap-2"
+          >
+            <Mail size={18} /> Join
+          </button>
+
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
+          >
+            <Plus size={18} /> Create
+          </button>
+        </div>
       </div>
 
-      {/* Success/Error Message */}
+      {/* MESSAGE */}
       {message.text && (
-        <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div
+          className={`p-3 rounded-lg ${
+            message.type === 'success'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      {/* Create Workspace Form */}
+      {/* CREATE WORKSPACE FORM */}
       {showCreateForm && (
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Workspace</h2>
-          <form className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Workspace Name</label>
-              <input
-                type="text"
-                placeholder="e.g., Marketing Team"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-              <textarea
-                rows={3}
-                placeholder="Describe the purpose of this workspace..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Create Workspace</button>
-              <button type="button" onClick={() => setShowCreateForm(false)} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
-            </div>
-          </form>
-        </div>
+        <form
+          onSubmit={handleCreateWorkspace}
+          className="p-4 bg-white border rounded-lg space-y-3"
+        >
+          <input
+            type="text"
+            placeholder="Workspace name"
+            value={createData.name}
+            onChange={(e) =>
+              setCreateData({ ...createData, name: e.target.value })
+            }
+            required
+            className="w-full px-3 py-2 border rounded"
+          />
+
+          <textarea
+            placeholder="Description (optional)"
+            value={createData.description}
+            onChange={(e) =>
+              setCreateData({
+                ...createData,
+                description: e.target.value,
+              })
+            }
+            className="w-full px-3 py-2 border rounded"
+          />
+
+          <button
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            {loading ? 'Creating...' : 'Create Workspace'}
+          </button>
+        </form>
       )}
 
-      {/* Workspaces Grid */}
+      {/* JOIN WORKSPACE FORM */}
+      {showJoinForm && (
+        <form
+          onSubmit={handleJoinWorkspace}
+          className="p-4 bg-white border rounded-lg space-y-3"
+        >
+          <select
+            value={joinData.workspaceId}
+            onChange={(e) =>
+              setJoinData({
+                ...joinData,
+                workspaceId: e.target.value,
+              })
+            }
+            required
+            className="w-full px-3 py-2 border rounded"
+          >
+            <option value="">Select workspace</option>
+            {workspaces.map((ws) => (
+              <option key={ws._id} value={ws._id}>
+                {ws.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            {loading ? 'Joining...' : 'Join Workspace'}
+          </button>
+        </form>
+      )}
+
+      {/* WORKSPACE LIST */}
       <div className="grid md:grid-cols-2 gap-6">
-        {workspaces.map((workspace) => (
-          <div key={workspace.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{workspace.name}</h3>
-                <span className="text-sm px-2 py-1 bg-blue-100 text-blue-700 rounded-full">{workspace.role}</span>
-              </div>
-              <button className="text-gray-400 hover:text-gray-600"><Settings size={20} /></button>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Members</p>
-                <p className="text-2xl font-bold text-gray-900">{workspace.members}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">{workspace.expenses}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{workspace.total}</p>
-              </div>
-            </div>
-            <button className="w-full px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">View Workspace</button>
+        {workspaces.map((ws) => (
+          <div
+            key={ws._id}
+            className="p-5 bg-white border rounded-lg"
+          >
+            <h3 className="text-xl font-bold">{ws.name}</h3>
+            <p className="text-gray-600">{ws.description}</p>
+            <p className="mt-2 text-sm">
+              Members: {ws.members?.length || 1}
+            </p>
           </div>
         ))}
-      </div>
-
-      {/* Team Members Section */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Team Members</h2>
-          <button
-            onClick={() => setShowInviteForm(!showInviteForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <Mail size={18} /> Invite Member
-          </button>
-        </div>
-
-        {/* Invite Form */}
-        {showInviteForm && (
-          <form onSubmit={handleInviteSubmit} className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <h3 className="font-medium text-gray-900 mb-3">Invite Team Member via Email</h3>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                type="email"
-                value={inviteData.email}
-                onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                placeholder="member@example.com"
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <select
-                value={inviteData.role}
-                onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Admin">Admin</option>
-                <option value="Member">Member</option>
-                <option value="Viewer">Viewer</option>
-              </select>
-            </div>
-            <div className="flex space-x-2 mt-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {loading ? 'Sending...' : 'Send Email Invite'}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowInviteForm(false); setMessage({ type: '', text: '' }); }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Members List */}
-        <div className="space-y-3">
-          {members.map((member, index) => (
-            <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="text-blue-600" size={20} />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{member.name}</h4>
-                  <p className="text-sm text-gray-600">{member.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full">{member.role}</span>
-                <span className={`text-sm px-3 py-1 rounded-full ${member.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{member.status}</span>
-                <button className="text-red-600 hover:text-red-700"><Trash2 size={18} /></button>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
