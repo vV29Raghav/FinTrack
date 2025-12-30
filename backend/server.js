@@ -28,13 +28,33 @@ app.use(express.urlencoded({ extended: true }));
 // ======================
 // MongoDB Connection
 // ======================
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err) => {
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('✅ MongoDB connected successfully');
+  } catch (err) {
     console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
-  });
+    // Do not exit process, let it try to reconnect or handle gracefully
+  }
+};
+
+connectDB();
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB error:', err);
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected');
+});
 
 // ======================
 // Email Transporter (GLOBAL)

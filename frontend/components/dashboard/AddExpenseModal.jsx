@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import axios from 'axios';
 
@@ -18,8 +18,27 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [suggestedCategory, setSuggestedCategory] = useState('');
+  const [workspaces, setWorkspaces] = useState([]);
 
   const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && userId) {
+      fetchWorkspaces();
+    }
+  }, [isOpen, userId]);
+
+  const fetchWorkspaces = async () => {
+    try {
+      const token = await getToken();
+      const res = await axios.get(`${API_URL}/workspaces/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkspaces(res.data.workspaces || []);
+    } catch (err) {
+      console.error('Failed to fetch workspaces:', err);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -75,7 +94,12 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
 
       const response = await axios.post(
         `${API_URL}/expenses`,
-        { ...formData, userId, submittedBy: userId },
+        {
+          ...formData,
+          userId,
+          submittedBy: userId,
+          workspaceId: formData.workspaceId === 'personal' ? null : formData.workspaceId
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -106,6 +130,7 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
       date: new Date().toISOString().split('T')[0],
       category: '',
       description: '',
+      workspaceId: 'personal'
     });
     setSuggestedCategory('');
     setMessage({ type: '', text: '' });
@@ -125,67 +150,95 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {message.text && (
             <div
-              className={`p-3 rounded ${
-                message.type === 'success'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
+              className={`p-3 rounded ${message.type === 'success'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+                }`}
             >
               {message.text}
             </div>
           )}
 
-          <input
-            name="name"
-            placeholder="Expense name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className="w-full border px-4 py-2 rounded"
-            required
-          />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expense Name</label>
+              <input
+                name="name"
+                placeholder="e.g., Office Supplies"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="w-full border px-4 py-2 rounded-lg"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+              <input
+                type="number"
+                name="amount"
+                placeholder="0.00"
+                value={formData.amount}
+                onChange={handleInputChange}
+                className="w-full border px-4 py-2 rounded-lg"
+                required
+              />
+            </div>
+          </div>
 
           {suggestedCategory && suggestedCategory !== formData.category && (
-            <div className="bg-blue-50 border p-2 rounded flex justify-between items-center">
-              <span>💡 Suggested: <b>{suggestedCategory}</b></span>
+            <div className="bg-blue-50 border border-blue-100 p-2 rounded-lg flex justify-between items-center">
+              <span className="text-sm">💡 Suggested: <b>{suggestedCategory}</b></span>
               <button
                 type="button"
                 onClick={applySuggestedCategory}
-                className="text-sm bg-blue-600 text-white px-3 py-1 rounded"
+                className="text-xs bg-blue-600 text-white px-3 py-1 rounded"
               >
                 Use
               </button>
             </div>
           )}
 
-          <input
-            type="number"
-            name="amount"
-            placeholder="Amount"
-            value={formData.amount}
-            onChange={handleInputChange}
-            className="w-full border px-4 py-2 rounded"
-            required
-          />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="w-full border px-4 py-2 rounded-lg"
+                required
+              >
+                <option value="">Select category</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Rent">Rent</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Salary">Salary/Income</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleInputChange}
-            className="w-full border px-4 py-2 rounded"
-            required
-          >
-            <option value="">Select category</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Rent">Rent</option>
-            <option value="Utilities">Utilities</option>
-            <option value="Other">Other</option>
-          </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assign to Workspace</label>
+              <select
+                name="workspaceId"
+                value={formData.workspaceId || 'personal'}
+                onChange={handleInputChange}
+                className="w-full border px-4 py-2 rounded-lg"
+              >
+                <option value="personal">Personal (Private)</option>
+                {workspaces.map(ws => (
+                  <option key={ws._id} value={ws._id}>{ws.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition"
           >
             {loading ? 'Saving...' : 'Create Expense'}
           </button>

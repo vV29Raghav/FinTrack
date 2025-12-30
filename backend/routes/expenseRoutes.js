@@ -49,16 +49,32 @@ router.post('/suggest-category', (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { userId, workspaceId, status } = req.query;
-    const query = {};
+    let query = {};
 
-    if (userId) query.userId = userId;
-    if (workspaceId) query.workspaceId = workspaceId;
+    if (workspaceId) {
+      // If a specific workspace is requested, just show that
+      query.workspaceId = workspaceId;
+    } else if (userId) {
+      // If just userId is provided, get personal expenses + expenses from all workspaces the user is in
+      const User = require('../models/User');
+      const user = await User.findOne({ clerkId: userId }).lean();
+
+      const workspaceIds = user?.workspaces || [];
+
+      query = {
+        $or: [
+          { userId: userId }, // Created by user
+          { workspaceId: { $in: workspaceIds } } // In user's workspaces
+        ]
+      };
+    }
+
     if (status) query.status = status;
 
     const expenses = await Expense.find(query).sort({ date: -1 });
     res.json({ success: true, expenses });
-  } catch {
-    res.status(500).json({ success: false, message: 'Failed to fetch expenses' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch expenses from MongoDB' });
   }
 });
 
@@ -109,8 +125,8 @@ router.post('/', async (req, res) => {
     const expense = new Expense(req.body);
     await expense.save();
     res.status(201).json({ success: true, expense });
-  } catch {
-    res.status(500).json({ success: false, message: 'Failed to create expense' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create expense in MongoDB' });
   }
 });
 
