@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
       name,
       description,
       owner: ownerId,
-      members: [{ userId: ownerId, role: 'admin' }]
+      members: [{ userId: ownerId, name: user.name, role: 'admin' }]
     });
 
     await workspace.save();
@@ -229,6 +229,19 @@ router.get('/:id', async (req, res) => {
 
     if (!workspace) return res.status(404).json({ success: false, message: 'Workspace not found' });
 
+    // Dynamically populate member names if they are missing or "Unknown"
+    const updatedMembers = await Promise.all(workspace.members.map(async (member) => {
+      if (!member.name || member.name === 'Unknown' || member.name === 'Anonymous') {
+        const user = await User.findOne({ clerkId: member.userId }).lean();
+        if (user) {
+          return { ...member, name: user.name };
+        }
+      }
+      return member;
+    }));
+
+    workspace.members = updatedMembers;
+
     res.json({ success: true, workspace });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching workspace', error: error.message });
@@ -276,7 +289,19 @@ router.get('/user/:clerkId', async (req, res) => {
     }
 
     // Filter out any null workspaces in case of dangling references
-    const validWorkspaces = (user.workspaces || []).filter(ws => ws !== null);
+    let validWorkspaces = (user.workspaces || []).filter(ws => ws !== null);
+
+    // Dynamically populate member names for each workspace
+    validWorkspaces = await Promise.all(validWorkspaces.map(async (ws) => {
+      const updatedMembers = await Promise.all(ws.members.map(async (member) => {
+        if (!member.name || member.name === 'Unknown' || member.name === 'Anonymous') {
+          const u = await User.findOne({ clerkId: member.userId }).lean();
+          if (u) return { ...member, name: u.name };
+        }
+        return member;
+      }));
+      return { ...ws, members: updatedMembers };
+    }));
 
     res.json({ success: true, workspaces: validWorkspaces });
   } catch (error) {

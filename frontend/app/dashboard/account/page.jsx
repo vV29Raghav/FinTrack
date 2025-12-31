@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useUser, useClerk } from '@clerk/nextjs';
 import { CreditCard, Crown, CheckCircle, LogOut } from 'lucide-react';
@@ -113,11 +114,10 @@ export default function AccountPage() {
             <div
               key={plan.name}
               onClick={() => !plan.current && handleUpgrade(plan.paymentLink)}
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                plan.current
+              className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${plan.current
                   ? 'border-blue-600 bg-blue-50 cursor-not-allowed'
                   : 'border-gray-200 hover:border-blue-500 hover:shadow-lg'
-              }`}
+                }`}
             >
               <div className="text-center mb-4">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
@@ -142,11 +142,10 @@ export default function AccountPage() {
                   handleUpgrade(plan.paymentLink);
                 }}
                 disabled={plan.current}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  plan.current
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${plan.current
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+                  }`}
               >
                 {plan.current ? 'Current Plan' : 'Upgrade'}
               </button>

@@ -13,6 +13,7 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
     date: new Date().toISOString().split('T')[0],
     category: '',
     description: '',
+    workspaceId: 'personal'
   });
 
   const [loading, setLoading] = useState(false);
@@ -23,8 +24,17 @@ export default function AddExpenseModal({ isOpen, onClose, userId, getToken, onS
   const debounceRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && userId) {
-      fetchWorkspaces();
+    if (isOpen) {
+      if (userId) fetchWorkspaces();
+
+      // Get workspaceId from URL
+      const searchParams = new URLSearchParams(window.location.search);
+      const wsId = searchParams.get('workspaceId');
+      if (wsId) {
+        setFormData(prev => ({ ...prev, workspaceId: wsId }));
+      } else {
+        setFormData(prev => ({ ...prev, workspaceId: 'personal' }));
+      }
     }
   }, [isOpen, userId]);
 

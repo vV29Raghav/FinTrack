@@ -1,8 +1,10 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useUser, useAuth } from '@clerk/nextjs';
 import { DollarSign, PiggyBank, Activity, TrendingDown, Edit2, Trash2, Loader2, FolderOpen } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Link from 'next/link';
 
@@ -13,8 +15,17 @@ import SalaryModal from '../../components/dashboard/SalaryModal';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin text-blue-600" size={40} /></div>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const { user } = useUser();
   const { getToken } = useAuth();
+  const searchParams = useSearchParams();
 
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +46,8 @@ export default function DashboardPage() {
       setLoading(true);
       const token = await getToken();
 
-      // Get workspaceId from URL query params safely (avoiding issues in SSR)
-      let workspaceId = null;
-      if (typeof window !== 'undefined') {
-        const searchParams = new URLSearchParams(window.location.search);
-        workspaceId = searchParams.get('workspaceId');
-      }
+      // Get workspaceId from URL query params
+      const workspaceId = searchParams.get('workspaceId');
 
       const params = { userId: user.id };
       if (workspaceId) {
@@ -79,7 +86,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     fetchExpenses();
-  }, [user]);
+  }, [user, searchParams]);
 
   const handleDeleteExpense = async (id) => {
     if (!confirm('Are you sure you want to delete this expense?')) return;
@@ -107,7 +114,6 @@ export default function DashboardPage() {
   const usableMonthly = salary - savings;
 
   const now = new Date();
-  const today = now.getDate();
   const month = now.getMonth();
   const year = now.getFullYear();
   const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
@@ -126,18 +132,6 @@ export default function DashboardPage() {
 
   const remainingMonthly = usableMonthly - totalSpentThisMonth;
   const dailyBudget = usableMonthly / lastDayOfMonth;
-
-  const todaySpent = useMemo(() => {
-    const todayStr = now.toISOString().split('T')[0];
-    return expenses
-      .filter(e => {
-        const d = new Date(e.date);
-        return d.toISOString().split('T')[0] === todayStr;
-      })
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-  }, [expenses]);
-
-  const todayLeft = dailyBudget - todaySpent;
 
   // ============================
   // STATS CARDS
