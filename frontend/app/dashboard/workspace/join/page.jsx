@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import axios from 'axios';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function JoinWorkspaceContent() {
     const searchParams = useSearchParams();

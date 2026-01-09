@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import axios from "axios";
 import DashboardSidebar from "../../components/dashboard/Sidebar";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function DashboardLayout({ children }) {
   const { user, isLoaded } = useUser();

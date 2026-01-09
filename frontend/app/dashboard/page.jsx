@@ -12,7 +12,7 @@ import AddExpenseModal from '../../components/dashboard/AddExpenseModal';
 import EditExpenseModal from '../../components/dashboard/EditExpenseModal';
 import SalaryModal from '../../components/dashboard/SalaryModal';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function DashboardPage() {
   return (
