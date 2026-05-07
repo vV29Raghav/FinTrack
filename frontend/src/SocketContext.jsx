@@ -10,7 +10,7 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const newSocket = io('http://localhost:5000', {
+      const newSocket = io(process.env.BACKEND_URL, {
         query: { userId: user._id },
         transports: ['websocket']
       })
