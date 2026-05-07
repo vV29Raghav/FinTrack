@@ -1,169 +1,212 @@
-FinTrack
+# SplitWise Pro
 
-FinTrack is a modern fintech dashboard and expense tracking application built with Next.js, Tailwind CSS, Clerk for authentication, and a Node.js/Express backend with MongoDB. Users can track expenses, generate reports, manage approvals, and collaborate with a team.
+A full-stack production-ready expense splitting app built with React + Node.js/Express.
 
-Features
+## 🚀 Quick Start
 
-User authentication and management via Clerk
+### Option 1: Open the standalone demo (zero install)
+```
+open dist/index.html
+```
+Works directly in any modern browser. No server needed.
 
-Dashboard with key statistics:
+---
 
-Total expenses
+### Option 2: Full-stack local development
 
-Monthly expenses
+#### Prerequisites
+- Node.js 18+
+- MongoDB (local or Atlas)
 
-Pending approvals
-
-Average daily spend
-
-Recent expenses list
-
-Quick actions:
-
-Add new expense
-
-Generate reports
-
-Invite team members
-
-Responsive design with a mobile-friendly sidebar
-
-Secure API calls using JWT tokens
-
-Modern UI with Tailwind CSS and icons via Lucide
-
-Tech Stack
-
-Frontend: Next.js 13 (App Router), React, Tailwind CSS, Lucide Icons, Clerk for auth
-
-Backend: Node.js, Express, MongoDB (Mongoose)
-
-API Requests: Axios
-
-Authentication: JWT via Clerk
-
-Styling: Tailwind CSS
-
-Prerequisites
-
-Node.js >= 18
-
-npm or yarn
-
-MongoDB instance (local or Atlas)
-
-Clerk account for authentication (get publishable key)
-
-Getting Started
-1️⃣ Clone the repository
-git clone https://github.com/vV29Raghav/fintrack.git
-cd fintrack
-
-2️⃣ Install dependencies
-Frontend
-cd frontend
+#### 1. Install dependencies
+```bash
+# Root
 npm install
-# or
-yarn
 
-Backend
-cd backend
-npm install
-# or
-yarn
+# Client (React + Vite)
+cd client && npm install
 
-3️⃣ Configure environment variables
-Frontend (.env.local)
-NEXT_PUBLIC_API_URL=http://localhost:5001/api
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXX
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+# Server (Express)
+cd ../server && npm install
+```
 
-Backend (.env)
-PORT=5001
-MONGO_URI=mongodb://localhost:27017/fintrack
-JWT_SECRET=your_jwt_secret
+#### 2. Configure environment
+```bash
+cp server/.env.example server/.env
+# Edit server/.env — set MONGODB_URI and JWT_SECRET
+```
 
-
-Make sure to replace all placeholders with your own keys/URIs.
-
-4️⃣ Start the backend server
-cd backend
+#### 3. Run both simultaneously
+```bash
+# From root
 npm run dev
+# → Client: http://localhost:5173
+# → Server: http://localhost:5000
+```
 
+Or run separately:
+```bash
+# Terminal 1 — Backend
+cd server && npm run dev
 
-You should see:
+# Terminal 2 — Frontend
+cd client && npm run dev
+```
 
-Server running on port 5001
-Connected to MongoDB
+---
 
+## 📁 Project Structure
 
-Test the backend API in browser or Postman:
+```
+splitwise-pro/
+├── dist/                     # ✅ Standalone bundled frontend (ready to open)
+│   └── index.html            # Self-contained — open in browser
+│
+├── client/                   # React + Vite frontend (source)
+│   ├── src/
+│   │   ├── App.jsx           # Root component + routing
+│   │   ├── AppContext.jsx    # Global state (React Context + useReducer)
+│   │   ├── Router.jsx        # Lightweight client-side router
+│   │   ├── components/
+│   │   │   ├── ui.jsx        # Button, Input, Modal, Card, Badge, Avatar...
+│   │   │   ├── Sidebar.jsx   # Navigation sidebar
+│   │   │   ├── Topbar.jsx    # Top navigation bar
+│   │   │   ├── AddExpenseModal.jsx
+│   │   │   └── ExpenseItem.jsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Groups.jsx
+│   │   │   ├── GroupDetail.jsx
+│   │   │   ├── Friends.jsx
+│   │   │   ├── Activity.jsx
+│   │   │   ├── Reports.jsx
+│   │   │   ├── Notifications.jsx
+│   │   │   ├── Settings.jsx
+│   │   │   ├── LandingPage.jsx
+│   │   │   └── AuthPages.jsx (Login + Signup)
+│   │   ├── data/data.js      # Mock data for demo mode
+│   │   └── utils.js          # Helpers, toast system
+│   └── package.json
+│
+└── server/                   # Node.js + Express backend
+    ├── src/
+    │   ├── index.js          # Entry point — Express + Socket.IO
+    │   ├── config/db.js      # MongoDB connection
+    │   ├── models/index.js   # User, Group, Expense, Settlement, Notification
+    │   ├── controllers/
+    │   │   ├── authController.js
+    │   │   ├── userController.js
+    │   │   ├── groupController.js
+    │   │   ├── expenseController.js
+    │   │   ├── settlementController.js
+    │   │   ├── notificationController.js
+    │   │   └── reportController.js
+    │   ├── routes/index.js   # All API routes
+    │   ├── middleware/index.js # Auth, error handler, validate
+    │   ├── sockets/index.js  # Socket.IO real-time events
+    │   └── utils/balanceEngine.js # Debt simplification algorithm
+    └── package.json
+```
 
-http://localhost:5001/api/expenses/stats
+---
 
-5️⃣ Start the frontend
-cd frontend
-npm run dev
+## 🔌 API Reference
 
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/signup` | Register new user |
+| POST | `/api/auth/login` | Login, get JWT |
+| POST | `/api/auth/logout` | Invalidate refresh token |
+| POST | `/api/auth/refresh` | Refresh access token |
 
-Open your browser:
+### Groups
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/groups` | Get all my groups |
+| POST | `/api/groups` | Create group |
+| GET | `/api/groups/:id` | Group details + simplified debts |
+| PUT | `/api/groups/:id` | Update group |
+| DELETE | `/api/groups/:id` | Delete group |
+| POST | `/api/groups/:id/members` | Add member |
+| DELETE | `/api/groups/:id/members/:userId` | Remove member |
 
-http://localhost:3000
+### Expenses
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/expenses/group/:groupId` | List expenses (paginated) |
+| POST | `/api/expenses` | Add expense (equal/exact/percentage/shares) |
+| PUT | `/api/expenses/:id` | Edit expense |
+| DELETE | `/api/expenses/:id` | Delete expense |
 
+### Settlements
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/settlements/:groupId` | History + simplified debts |
+| POST | `/api/settlements/pay` | Record payment |
 
-You should see the landing page of FinTrack.
-Usage
+### Reports
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reports/monthly` | 6-month spending chart data |
+| GET | `/api/reports/category` | Category breakdown |
+| GET | `/api/reports/summary` | Total owed/owing |
 
-Sign up / Sign in via Clerk authentication.
+---
 
-Navigate to Dashboard:
+## ⚡ Real-Time Events (Socket.IO)
 
-View key expense stats
+Connect: `const socket = io('http://localhost:5000', { auth: { token } })`
 
-Check recent expenses
+Join a group room: `socket.emit('join_group', groupId)`
 
-Use quick actions for adding expenses or generating reports
+| Event (receive) | Payload |
+|-----------------|---------|
+| `expense_added` | `{ expense }` |
+| `expense_updated` | `{ expense }` |
+| `expense_deleted` | `{ expenseId, groupId }` |
+| `balance_updated` | `{ groupId }` |
+| `settlement_done` | `{ settlement }` |
+| `group_member_added` | `{ groupId, user }` |
+| `notification_new` | `{ title, message }` |
 
-Team Collaboration:
+---
 
-Invite team members via workspace
+## 🛡️ Features
 
-Track approvals and shared expenses
+- ✅ JWT authentication with refresh tokens
+- ✅ bcrypt password hashing (cost 12)
+- ✅ Rate limiting (200 req/15min general, 20 for auth)
+- ✅ Helmet security headers
+- ✅ CORS configured for your client URL
+- ✅ Input validation (express-validator)
+- ✅ MongoDB indexes for fast queries
+- ✅ Debt simplification algorithm (greedy min-transactions)
+- ✅ Equal / Exact / Percentage / Shares split types
+- ✅ Real-time updates via Socket.IO rooms
+- ✅ Dark mode
+- ✅ Fully responsive (mobile-first)
+- ✅ Works as standalone HTML (no server needed for demo)
 
-Common Issues
+---
 
-1. Axios Network Error
+## 🚢 Deployment
 
-Ensure backend is running at the correct port (5001)
+### Frontend → Vercel
+```bash
+cd client
+npm run build
+# Deploy the dist/ folder to Vercel
+```
 
-Check NEXT_PUBLIC_API_URL points to your backend
+### Backend → Railway / Render
+```bash
+# Set env vars in Railway/Render dashboard
+# PORT, MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, CLIENT_URL
+cd server
+# Railway auto-detects package.json start script
+```
 
-2. Hydration Warning (Next.js)
-
-Suppress warnings on <html> in app/layout.jsx:
-
-<html lang="en" suppressHydrationWarning>
-
-
-
-Scripts
-Frontend
-npm run dev      # Start development server
-npm run build    # Build production
-npm run start    # Start production server
-
-Backend
-npm run dev      # Start dev server with nodemon
-npm start        # Start production server
-
-Contributing
-
-Fork the repository
-
-Create a new branch (git checkout -b feature/awesome-feature)
-
-Commit your changes (git commit -m "Add feature")
-
-Push to the branch (git push origin feature/awesome-feature)
-
+### MongoDB → Atlas
+1. Create free cluster at mongodb.com/atlas
+2. Copy connection string to `MONGODB_URI` env var
