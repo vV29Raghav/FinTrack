@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE = `${import.meta.env.VITE_API_URL}/api`
+const API_BASE = `${import.meta.env.VITE_API_URL || ''}/api`
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -74,4 +74,54 @@ api.interceptors.response.use(
   }
 )
 
-export default api
+// ── API Services ──────────────────────────────────────────────────────
+
+export const auth = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  signup: (data) => api.post('/auth/signup', data),
+  me: () => api.get('/auth/me'),
+}
+
+export const groups = {
+  getAll: () => api.get('/groups'),
+  getById: (id) => api.get(`/groups/${id}`),
+  create: (data) => api.post('/groups', data),
+  update: (id, data) => api.put(`/groups/${id}`, data),
+  delete: (id) => api.delete(`/groups/${id}`),
+  addMember: (groupId, userId) => api.post(`/groups/${groupId}/members`, { userId }),
+  removeMember: (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`),
+}
+
+export const expenses = {
+  getUserRecent: () => api.get('/expenses'),
+  getByGroup: (groupId) => api.get(`/expenses/group/${groupId}`),
+  create: (data) => api.post('/expenses', data),
+  update: (id, data) => api.put(`/expenses/${id}`, data),
+  delete: (id) => api.delete(`/expenses/${id}`),
+}
+
+export const settlements = {
+  getPending: (groupId) => api.get(`/settlements/${groupId}`),
+  pay: (data) => api.post('/settlements/pay', data),
+}
+
+export const notifications = {
+  getAll: () => api.get('/notifications'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+}
+
+export const reports = {
+  getSummary: () => api.get('/reports/summary'),
+  getMonthly: () => api.get('/reports/monthly'),
+  getCategory: () => api.get('/reports/category'),
+}
+
+export const users = {
+  search: (q) => api.get(`/users/search?q=${q}`),
+  addFriend: (userId) => api.post('/users/add-friend', { userId }),
+  removeFriend: (userId) => api.delete(`/users/remove-friend/${userId}`),
+}
+
+export default api
