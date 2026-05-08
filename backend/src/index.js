@@ -21,7 +21,7 @@ const CLIENT = process.env.CLIENT_URL || 'http://localhost:5173'
 
 // ── Socket.IO ────────────────────────────────────────────────────────
 const io = new Server(server, {
-  cors: { origin: [CLIENT, 'http://localhost:5173', 'http://localhost:3000'], credentials: true },
+  cors: { origin: [CLIENT, 'https://project-q8hd7.vercel.app', 'http://localhost:5173', 'http://localhost:3000'], credentials: true },
   transports: ['websocket', 'polling'],
 })
 setupSockets(io)
@@ -29,7 +29,7 @@ setupSockets(io)
 // ── Middleware ────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }))
 app.use(cors({
-  origin: [CLIENT, 'http://localhost:5173', 'http://localhost:3000'],
+  origin: [CLIENT, 'https://project-q8hd7.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }))
 app.use(express.json({ limit: '5mb' }))
@@ -100,7 +100,8 @@ async function start() {
     console.log(`\n🚀 SplitWise Pro server running`)
     console.log(`   ➜ API:    http://localhost:${PORT}/api`)
     console.log(`   ➜ Health: http://localhost:${PORT}/api/health`)
-    console.log(`   ➜ Mode:   ${process.env.NODE_ENV || 'development'}\n`)
+    console.log(`   ➜ Mode:   ${process.env.NODE_ENV || 'development'}`)
+    console.log(`   ➜ Client: ${CLIENT}\n`)
   })
 }
 
