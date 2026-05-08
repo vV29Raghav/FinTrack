@@ -49,10 +49,6 @@ const authLimiter = rateLimit({
   max: 20,
   message: { message: 'Too many auth attempts, please try again later.' },
 })
-app.use('/api', limiter)
-app.use('/api/auth/login',  authLimiter)
-app.use('/api/auth/signup', authLimiter)
-
 // Attach io to every request so controllers can emit events
 app.use((req, _res, next) => { req.io = io; next() })
 
@@ -64,6 +60,11 @@ app.use('/api/expenses',      expenseRouter)
 app.use('/api/settlements',   settlementRouter)
 app.use('/api/notifications', notifRouter)
 app.use('/api/reports',       reportRouter)
+
+// Rate limiting (applied after routes to ensure they don't block matching)
+app.use('/api', limiter)
+app.use('/api/auth/login',  authLimiter)
+app.use('/api/auth/signup', authLimiter)
 
 // Health check
 app.get('/api/health', (_req, res) => {
