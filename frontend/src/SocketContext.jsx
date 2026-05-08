@@ -10,9 +10,9 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const newSocket = io(process.env.BACKEND_URL, {
+      const newSocket = io(import.meta.env.VITE_API_URL, {
         query: { userId: user._id },
-        transports: ['websocket']
+        transports: ['websocket'],
       })
 
       newSocket.on('connect', () => {
