@@ -1,24 +1,8 @@
-# SplitWise Pro
+Fintrack
 
-A full-stack production-ready expense splitting app built with React + Node.js/Express.
+Full-stack local development
 
-## 🚀 Quick Start
-
-### Option 1: Open the standalone demo (zero install)
-```
-open dist/index.html
-```
-Works directly in any modern browser. No server needed.
-
----
-
-### Option 2: Full-stack local development
-
-#### Prerequisites
-- Node.js 18+
-- MongoDB (local or Atlas)
-
-#### 1. Install dependencies
+1. Install dependencies
 ```bash
 # Root
 npm install
@@ -30,13 +14,13 @@ cd client && npm install
 cd ../server && npm install
 ```
 
-#### 2. Configure environment
+2. Configure environment
 ```bash
 cp server/.env.example server/.env
 # Edit server/.env — set MONGODB_URI and JWT_SECRET
 ```
 
-#### 3. Run both simultaneously
+3. Run both simultaneously
 ```bash
 # From root
 npm run dev
@@ -55,7 +39,7 @@ cd client && npm run dev
 
 ---
 
-## 📁 Project Structure
+📁 Project Structure
 
 ```
 splitwise-pro/
@@ -110,7 +94,7 @@ splitwise-pro/
 
 ---
 
-## 🔌 API Reference
+🔌 API Reference
 
 ### Auth
 | Method | Endpoint | Description |
@@ -154,7 +138,7 @@ splitwise-pro/
 
 ---
 
-## ⚡ Real-Time Events (Socket.IO)
+⚡ Real-Time Events (Socket.IO)
 
 Connect: `const socket = io('http://localhost:5000', { auth: { token } })`
 
@@ -172,7 +156,7 @@ Join a group room: `socket.emit('join_group', groupId)`
 
 ---
 
-## 🛡️ Features
+🛡️ Features
 
 - ✅ JWT authentication with refresh tokens
 - ✅ bcrypt password hashing (cost 12)
@@ -190,7 +174,7 @@ Join a group room: `socket.emit('join_group', groupId)`
 
 ---
 
-## 🚢 Deployment
+🚢 Deployment
 
 ### Frontend → Vercel
 ```bash
@@ -199,7 +183,7 @@ npm run build
 # Deploy the dist/ folder to Vercel
 ```
 
-### Backend → Railway / Render
+### Backend → Render
 ```bash
 # Set env vars in Railway/Render dashboard
 # PORT, MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, CLIENT_URL
