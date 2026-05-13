@@ -88,7 +88,7 @@ export default function Dashboard() {
         setSummary(sumRes.data)
         setRecentExpenses(expRes.data.expenses)
         setGroups(grpRes.data.groups)
-        setMonthlyData(monRes.data.monthly)
+        setMonthlyData(monRes.data.monthly || [])
         
         // Derive pending settlements from groups
         const allDebts = []
@@ -151,7 +151,7 @@ export default function Dashboard() {
         <StatCard label="Owed to You" value={fmt(summary.totalOwed)}  sub="Across all groups"   color="emerald" icon="💰" />
         <StatCard label="You Owe"     value={fmt(summary.totalOwe)}   sub="Pending settlements" color="red"     icon="📤" />
         <StatCard label="Net Balance" value={(summary.netBalance >= 0 ? '+' : '') + fmt(summary.netBalance)} sub="Overall standing" color="blue"    icon="⚖️" />
-        <StatCard label="This Month"  value={fmt(monthlyData[monthlyData.length-1]?.amount || 0)} sub="Total expenses"    color="amber"   icon="📋" />
+        <StatCard label="This Month"  value={fmt(monthlyData && monthlyData.length > 0 ? monthlyData[monthlyData.length-1]?.amount || 0 : 0)} sub="Total expenses"    color="amber"   icon="📋" />
       </div>
 
       {/* Middle row */}

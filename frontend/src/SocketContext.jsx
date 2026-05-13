@@ -3,6 +3,7 @@ import { io } from 'socket.io-client'
 import { useAuth } from './AppContext.jsx'
 
 const SocketContext = createContext(null)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export function SocketProvider({ children }) {
   const { user, isAuthenticated } = useAuth()
@@ -10,7 +11,7 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const newSocket = io(import.meta.env.VITE_API_URL, {
+      const newSocket = io(API_URL, {
         query: { userId: user._id },
         transports: ['websocket'],
       })
