@@ -12,48 +12,104 @@ const FEATURES = [
 
 export default function LandingPage() {
   const { navigate } = useRouter()
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg">S</div>
-          <span className="font-bold text-slate-900 dark:text-white">SplitWise Pro</span>
+
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-sm">
+            S
+          </div>
+
+          <span className="font-extrabold text-lg text-slate-900 dark:text-white">
+            SplitWise Pro
+          </span>
         </div>
+
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => navigate('/login')}>Sign In</Button>
-          <Button onClick={() => navigate('/signup')}>Get Started Free</Button>
+          <Button variant="secondary" onClick={() => navigate('/login')}>
+            Sign In
+          </Button>
+
+          <Button onClick={() => navigate('/signup')}>
+            Get Started Free
+          </Button>
         </div>
       </nav>
 
       {/* Hero */}
-      <div className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
+      <div className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+
+        <div className="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-5 py-2 rounded-full text-sm font-semibold mb-8 shadow-sm">
           🎉 Trusted by 50,000+ teams worldwide
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight mb-6">
-          Split expenses,<br/><span className="text-emerald-500">not friendships.</span>
+
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight mb-7">
+          Split expenses,
+          <br />
+          <span className="text-emerald-500">
+            not friendships.
+          </span>
         </h1>
-        <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed">
-          Track shared expenses, split bills fairly, and settle debts instantly. The smartest way to manage money with friends, family, and teams.
+
+        <p className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          Track shared expenses, split bills fairly, and settle debts instantly.
+          The smartest way to manage money with friends, family, and teams.
         </p>
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Button size="lg" onClick={() => navigate('/signup')}>Start for Free →</Button>
-          <Button size="lg" variant="secondary" onClick={() => navigate('/login')}>View Demo</Button>
+
+        <div className="flex gap-4 justify-center flex-wrap">
+
+          <Button
+            size="lg"
+            onClick={() => navigate('/signup')}
+          >
+            Start for Free →
+          </Button>
+
+          <Button
+            size="lg"
+            variant="secondary"
+            onClick={() => navigate('/login')}
+          >
+            View Demo
+          </Button>
+
         </div>
       </div>
 
       {/* Features */}
       <div className="max-w-5xl mx-auto px-6 pb-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
           {FEATURES.map(f => (
-            <div key={f.title} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="font-bold text-slate-900 dark:text-white mb-2">{f.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.desc}</p>
+
+            <div
+              key={f.title}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-all duration-200"
+            >
+
+              <div className="text-4xl mb-4">
+                {f.icon}
+              </div>
+
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
+                {f.title}
+              </h3>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {f.desc}
+              </p>
+
             </div>
+
           ))}
+
         </div>
+
       </div>
     </div>
   )
