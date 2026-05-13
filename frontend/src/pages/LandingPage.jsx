@@ -2,12 +2,36 @@ import { useRouter } from '../Router.jsx'
 import { Button } from '../components/ui.jsx'
 
 const FEATURES = [
-  { icon:'⚡', title:'Real-Time Sync', desc:'Expenses update instantly via WebSockets. No refresh needed.' },
-  { icon:'🧮', title:'Smart Debt Settlement', desc:'Algorithm minimizes total transactions to settle all debts optimally.' },
-  { icon:'📊', title:'Spending Analytics', desc:'Visual charts, category breakdowns, and monthly trends.' },
-  { icon:'🔒', title:'Bank-Level Security', desc:'JWT auth, bcrypt hashing, rate limiting, and HTTPS protection.' },
-  { icon:'📱', title:'Fully Responsive', desc:'Works beautifully on mobile, tablet, and desktop.' },
-  { icon:'🌍', title:'Multi-Currency', desc:'Support for INR, USD, EUR and 50+ currencies.' },
+  {
+    icon: '⚡',
+    title: 'Instant Expense Sync',
+    desc: 'Expenses update live across all devices without refreshing.',
+  },
+  {
+    icon: '🧮',
+    title: 'Smart Balance Settlement',
+    desc: 'Automatically reduces unnecessary transactions between members.',
+  },
+  {
+    icon: '📊',
+    title: 'Expense Insights',
+    desc: 'View spending trends, charts, and category-wise breakdowns.',
+  },
+  {
+    icon: '🔒',
+    title: 'Secure Authentication',
+    desc: 'Protected using JWT auth, bcrypt encryption, and secure APIs.',
+  },
+  {
+    icon: '📱',
+    title: 'Responsive Design',
+    desc: 'Smooth experience across mobile, tablet, and desktop devices.',
+  },
+  {
+    icon: '🌍',
+    title: 'Multiple Currencies',
+    desc: 'Supports INR, USD, EUR, and many other global currencies.',
+  },
 ]
 
 export default function LandingPage() {
@@ -16,57 +40,78 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
 
-      {/* Nav */}
+      {/* Navbar */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
 
+        {/* Logo */}
         <div className="flex items-center gap-3">
+
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-sm">
             S
           </div>
 
-          <span className="font-extrabold text-lg text-slate-900 dark:text-white">
-            SplitWise Pro
-          </span>
+          <div>
+            <h1 className="font-extrabold text-lg text-slate-900 dark:text-white">
+              SplitWise Pro
+            </h1>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Expense Manager
+            </p>
+          </div>
+
         </div>
 
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => navigate('/login')}>
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/login')}
+          >
             Sign In
           </Button>
 
-          <Button onClick={() => navigate('/signup')}>
-            Get Started Free
+          <Button
+            onClick={() => navigate('/signup')}
+          >
+            Get Started
           </Button>
+
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+      {/* Hero Section */}
+      <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
 
         <div className="inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-5 py-2 rounded-full text-sm font-semibold mb-8 shadow-sm">
-          🎉 Trusted by 50,000+ teams worldwide
+          🚀 Used by 50,000+ users worldwide
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight mb-7">
-          Split expenses,
+
+          Split expenses
           <br />
+
           <span className="text-emerald-500">
-            not friendships.
+            without the stress.
           </span>
+
         </h1>
 
         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-          Track shared expenses, split bills fairly, and settle debts instantly.
-          The smartest way to manage money with friends, family, and teams.
+          Easily manage shared expenses, split bills fairly,
+          and keep track of balances with friends, family,
+          roommates, and teams.
         </p>
 
-        <div className="flex gap-4 justify-center flex-wrap">
+        <div className="flex items-center justify-center gap-4 flex-wrap">
 
           <Button
             size="lg"
             onClick={() => navigate('/signup')}
           >
-            Start for Free →
+            Start Free →
           </Button>
 
           <Button
@@ -74,34 +119,34 @@ export default function LandingPage() {
             variant="secondary"
             onClick={() => navigate('/login')}
           >
-            View Demo
+            Explore Demo
           </Button>
 
         </div>
-      </div>
+      </section>
 
       {/* Features */}
-      <div className="max-w-5xl mx-auto px-6 pb-20">
+      <section className="max-w-5xl mx-auto px-6 pb-20">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-          {FEATURES.map(f => (
+          {FEATURES.map(feature => (
 
             <div
-              key={f.title}
+              key={feature.title}
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-all duration-200"
             >
 
               <div className="text-4xl mb-4">
-                {f.icon}
+                {feature.icon}
               </div>
 
               <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                {f.title}
+                {feature.title}
               </h3>
 
               <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                {f.desc}
+                {feature.desc}
               </p>
 
             </div>
@@ -110,7 +155,7 @@ export default function LandingPage() {
 
         </div>
 
-      </div>
+      </section>
     </div>
   )
 }
