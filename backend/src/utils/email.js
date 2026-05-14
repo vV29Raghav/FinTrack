@@ -1,23 +1,12 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend';
 
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
 export const sendVerificationEmail = async (to, otp) => {
   try {
-    const transporter = createTransporter()
-    
-    const mailOptions = {
-      from: `"FinTrack App" <${process.env.SMTP_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to,
       subject: 'Verify your email address',
       html: `
@@ -29,23 +18,25 @@ export const sendVerificationEmail = async (to, otp) => {
           <p>If you did not request this, please ignore this email.</p>
         </div>
       `,
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return false;
     }
 
-    const info = await transporter.sendMail(mailOptions)
-    console.log('Verification email sent: %s', info.messageId)
-    return true
+    console.log('Verification email sent:', data.id);
+    return true;
   } catch (error) {
-    console.error('Error sending verification email:', error)
-    return false
+    console.error('Error sending verification email:', error);
+    return false;
   }
-}
+};
 
 export const sendPasswordResetEmail = async (to, otp) => {
   try {
-    const transporter = createTransporter()
-    
-    const mailOptions = {
-      from: `"FinTrack App" <${process.env.SMTP_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to,
       subject: 'Reset your password',
       html: `
@@ -57,13 +48,17 @@ export const sendPasswordResetEmail = async (to, otp) => {
           <p>If you did not request a password reset, please safely ignore this email.</p>
         </div>
       `,
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return false;
     }
 
-    const info = await transporter.sendMail(mailOptions)
-    console.log('Password reset email sent: %s', info.messageId)
-    return true
+    console.log('Password reset email sent:', data.id);
+    return true;
   } catch (error) {
-    console.error('Error sending password reset email:', error)
-    return false
+    console.error('Error sending password reset email:', error);
+    return false;
   }
-}
+};
