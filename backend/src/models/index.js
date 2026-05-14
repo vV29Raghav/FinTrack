@@ -13,8 +13,12 @@ const userSchema = new Schema({
   currency:     { type:String, default:'INR', enum:['INR','USD','EUR','GBP'] },
   friends:      [{ type:Schema.Types.ObjectId, ref:'User' }],
   groups:       [{ type:Schema.Types.ObjectId, ref:'Group' }],
-  isVerified:   { type:Boolean, default:false },
-  refreshToken: { type:String, select:false },
+  isVerified:             { type:Boolean, default:false },
+  verificationOtp:        { type:String, select:false },
+  verificationOtpExpires: { type:Date, select:false },
+  resetOtp:               { type:String, select:false },
+  resetOtpExpires:        { type:Date, select:false },
+  refreshToken:           { type:String, select:false },
 }, { timestamps:true })
 
 userSchema.pre('save', async function(next) {

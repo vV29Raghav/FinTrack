@@ -3,10 +3,13 @@ import express from 'express'
 import { authenticate } from '../middleware/index.js'
 
 // ── Auth ──────────────────────────────────────────────────────────────
-import { signup, login, logout, refresh, me } from '../controllers/authController.js'
+import { signup, login, logout, refresh, me, verifyEmail, forgotPassword, resetPassword } from '../controllers/authController.js'
 export const authRouter = express.Router()
 authRouter.post('/signup',  signup)
+authRouter.post('/verify-email', verifyEmail)
 authRouter.post('/login',   login)
+authRouter.post('/forgot-password', forgotPassword)
+authRouter.post('/reset-password', resetPassword)
 authRouter.post('/logout',  logout)
 authRouter.post('/refresh', refresh)
 authRouter.get ('/me',      authenticate, me)

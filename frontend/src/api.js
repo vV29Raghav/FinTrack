@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`
+const API_BASE = `${import.meta.env.VITE_API_URL}/api`
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -79,6 +79,9 @@ api.interceptors.response.use(
 export const auth = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   signup: (data) => api.post('/auth/signup', data),
+  verifyEmail: (email, otp) => api.post('/auth/verify-email', { email, otp }),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (email, otp, newPassword) => api.post('/auth/reset-password', { email, otp, newPassword }),
   me: () => api.get('/auth/me'),
 }
 

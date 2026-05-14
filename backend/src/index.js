@@ -16,8 +16,8 @@ import { setupSockets } from './sockets/index.js'
 
 const app    = express()
 const server = createServer(app)
-const PORT   = process.env.PORT || 5000
-const CLIENT = process.env.CLIENT_URL || 'http://localhost:5173'
+const PORT   = process.env.PORT
+const CLIENT = process.env.CLIENT_URL
 
 // ── Socket.IO ────────────────────────────────────────────────────────
 const io = new Server(server, {

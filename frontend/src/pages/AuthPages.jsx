@@ -3,6 +3,7 @@ import { useRouter } from '../Router.jsx'
 import { useAuth } from '../AppContext.jsx'
 import { Button, Input } from '../components/ui.jsx'
 import { toast } from '../utils.js'
+import { auth } from '../api.js'
 
 function AuthLayout({ title, sub, children }) {
   const { navigate } = useRouter()
@@ -26,26 +27,117 @@ function AuthLayout({ title, sub, children }) {
 
 export function LoginPage() {
   const { navigate } = useRouter()
-  const { login } = useAuth()
+  const { login, verifyEmail } = useAuth()
   const [email, setEmail] = useState('alex@splitwise.pro')
   const [password, setPassword] = useState('password123')
+  
+  const [step, setStep] = useState('login') // 'login', 'verify', 'forgot', 'reset'
+  const [otp, setOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const submit = async (e) => {
+  const submitLogin = async (e) => {
     e.preventDefault()
     if (!email || !password) { toast.error('Please fill in all fields'); return }
     setLoading(true)
-    const success = await login(email, password)
+    const res = await login(email, password)
+    setLoading(false)
+    if (res.needsVerification) setStep('verify')
+    else if (res.success) navigate('/dashboard')
+  }
+
+  const submitVerify = async (e) => {
+    e.preventDefault()
+    if (!otp) { toast.error('Please enter the OTP'); return }
+    setLoading(true)
+    const success = await verifyEmail(email, otp)
     setLoading(false)
     if (success) navigate('/dashboard')
   }
 
+  const submitForgot = async (e) => {
+    e.preventDefault()
+    if (!email) { toast.error('Please enter your email address'); return }
+    setLoading(true)
+    try {
+      await auth.forgotPassword(email)
+      toast.success('If an account exists, an OTP was sent to your email.')
+      setStep('reset')
+    } catch (err) {
+      toast.error('Failed to request password reset')
+    }
+    setLoading(false)
+  }
+
+  const submitReset = async (e) => {
+    e.preventDefault()
+    if (!otp || !newPassword) { toast.error('Please fill in all fields'); return }
+    if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return }
+    setLoading(true)
+    try {
+      await auth.resetPassword(email, otp, newPassword)
+      toast.success('Password reset successful. You can now log in.')
+      setStep('login')
+      setPassword('')
+      setOtp('')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset password')
+    }
+    setLoading(false)
+  }
+
   const handleDemo = async () => {
-    // In a real app, you might have a demo endpoint
-    // For now, let's try a default login or just show an error if no user exists
     toast.info('Demo login disabled. Please sign up or login with real credentials.')
   }
 
+  if (step === 'verify') {
+    return (
+      <AuthLayout title="Verify your email" sub={`We've sent an OTP to ${email}`}>
+        <form onSubmit={submitVerify} className="space-y-4">
+          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+            value={otp} onChange={e => setOtp(e.target.value)} required/>
+          <Button type="submit" full loading={loading} size="lg">Verify Email</Button>
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+            Back to login
+          </button>
+        </form>
+      </AuthLayout>
+    )
+  }
+
+  if (step === 'forgot') {
+    return (
+      <AuthLayout title="Forgot Password" sub="Enter your email to receive a reset OTP">
+        <form onSubmit={submitForgot} className="space-y-4">
+          <Input label="Email address" type="email" placeholder="alex@example.com"
+            value={email} onChange={e => setEmail(e.target.value)} required/>
+          <Button type="submit" full loading={loading} size="lg">Send Reset OTP</Button>
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+            Back to login
+          </button>
+        </form>
+      </AuthLayout>
+    )
+  }
+
+  if (step === 'reset') {
+    return (
+      <AuthLayout title="Reset Password" sub="Enter the OTP and your new password">
+        <form onSubmit={submitReset} className="space-y-4">
+          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+            value={otp} onChange={e => setOtp(e.target.value)} required/>
+          <Input label="New Password" type="password" placeholder="••••••••"
+            value={newPassword} onChange={e => setNewPassword(e.target.value)} required/>
+          <Button type="submit" full loading={loading} size="lg">Reset Password</Button>
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+            Back to login
+          </button>
+        </form>
+      </AuthLayout>
+    )
+  }
+
+  // default 'login' step
   return (
     <AuthLayout title="Welcome back" sub="Sign in to your account to continue">
       <button onClick={handleDemo}
@@ -57,13 +149,13 @@ export function LoginPage() {
         <span className="text-xs text-slate-400">or sign in with email</span>
         <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"/>
       </div>
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submitLogin} className="space-y-4">
         <Input label="Email address" type="email" placeholder="alex@example.com"
           value={email} onChange={e => setEmail(e.target.value)} required/>
         <Input label="Password" type="password" placeholder="••••••••"
           value={password} onChange={e => setPassword(e.target.value)} required/>
         <div className="text-right">
-          <button type="button" className="text-sm text-emerald-500 hover:underline">Forgot password?</button>
+          <button type="button" onClick={() => setStep('forgot')} className="text-sm text-emerald-500 hover:underline">Forgot password?</button>
         </div>
         <Button type="submit" full loading={loading} size="lg">Sign In</Button>
       </form>
@@ -77,21 +169,35 @@ export function LoginPage() {
 
 export function SignupPage() {
   const { navigate } = useRouter()
-  const { signup } = useAuth()
+  const { signup, verifyEmail } = useAuth()
   const [form, setForm] = useState({ firstName:'', lastName:'', email:'', password:'' })
   const [loading, setLoading] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  
+  const [step, setStep] = useState('signup') // 'signup' or 'verify'
+  const [otp, setOtp] = useState('')
 
-  const submit = async (e) => {
+  const submitSignup = async (e) => {
     e.preventDefault()
     if (!form.firstName || !form.email || !form.password) { toast.error('Please fill in all fields'); return }
     if (form.password.length < 6) { toast.error('Password must be at least 6 characters'); return }
     setLoading(true)
-    const success = await signup({
+    const res = await signup({
       name: `${form.firstName} ${form.lastName}`.trim(),
       email: form.email,
       password: form.password
     })
+    setLoading(false)
+    if (res.needsVerification) {
+      setStep('verify')
+    }
+  }
+
+  const submitVerify = async (e) => {
+    e.preventDefault()
+    if (!otp) { toast.error('Please enter the OTP'); return }
+    setLoading(true)
+    const success = await verifyEmail(form.email, otp)
     setLoading(false)
     if (success) {
       toast.success(`Welcome, ${form.firstName}! 🎉`)
@@ -99,9 +205,21 @@ export function SignupPage() {
     }
   }
 
+  if (step === 'verify') {
+    return (
+      <AuthLayout title="Verify your email" sub={`We've sent an OTP to ${form.email}`}>
+        <form onSubmit={submitVerify} className="space-y-4">
+          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+            value={otp} onChange={e => setOtp(e.target.value)} required/>
+          <Button type="submit" full loading={loading} size="lg">Verify Email</Button>
+        </form>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout title="Create account" sub="Join 50,000+ users already saving time">
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submitSignup} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Input label="First name" placeholder="Alex" value={form.firstName} onChange={e => set('firstName', e.target.value)} required/>
           <Input label="Last name"  placeholder="Johnson" value={form.lastName} onChange={e => set('lastName', e.target.value)}/>

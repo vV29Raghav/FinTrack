@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 export async function connectDB() {
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/splitwise-pro'
+  const uri = process.env.MONGODB_URI
 
   try {
     await mongoose.connect(uri, {
@@ -10,7 +10,6 @@ export async function connectDB() {
     console.log(`✅ MongoDB connected: ${mongoose.connection.host}`)
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message)
-    // Don't exit — allow server to start with mock data
   }
 
   mongoose.connection.on('disconnected', () => {

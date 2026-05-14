@@ -110,21 +110,42 @@ export function useAuth() {
       const res = await auth.login(email, password)
       const { token, refreshToken, user } = res.data
       dispatch({ type: 'LOGIN', payload: { user, token, refreshToken } })
-      return true
+      return { success: true }
     } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.isVerified === false) {
+        toast.info(err.response.data.message)
+        return { success: false, needsVerification: true }
+      }
       toast.error(err.response?.data?.message || 'Login failed')
-      return false
+      return { success: false }
     }
   }
 
   const signup = async (data) => {
     try {
       const res = await auth.signup(data)
+      toast.success(res.data.message || 'Please check your email for the OTP.')
+      return { success: true, needsVerification: true }
+    } catch (err) {
+      // Handle the case where email exists but not verified (201 returned)
+      if (err.response?.status === 201) {
+        toast.success(err.response.data.message)
+        return { success: true, needsVerification: true }
+      }
+      toast.error(err.response?.data?.message || 'Signup failed')
+      return { success: false }
+    }
+  }
+
+  const verifyEmail = async (email, otp) => {
+    try {
+      const res = await auth.verifyEmail(email, otp)
       const { token, refreshToken, user } = res.data
       dispatch({ type: 'LOGIN', payload: { user, token, refreshToken } })
+      toast.success('Email verified successfully!')
       return true
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Signup failed')
+      toast.error(err.response?.data?.message || 'Verification failed')
       return false
     }
   }
@@ -136,5 +157,5 @@ export function useAuth() {
 
   const updateUser = (updates) => dispatch({ type: 'UPDATE_USER', payload: updates })
 
-  return { user: state.user, isAuthenticated: state.isAuthenticated && !!state.token, login, signup, logout, updateUser }
+  return { user: state.user, isAuthenticated: state.isAuthenticated && !!state.token, login, signup, verifyEmail, logout, updateUser }
 }
