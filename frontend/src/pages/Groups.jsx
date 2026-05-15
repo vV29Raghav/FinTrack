@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from '../Router.jsx'
-import { Card, Button, Modal, Input, Select, Badge, AvatarGroup, Tabs, EmptyState } from '../components/ui.jsx'
+import { Card, Button, Modal, Input, Badge, AvatarGroup, Tabs, EmptyState, SectionHeader } from '../components/ui.jsx'
 import { groups as apiGroups } from '../api.js'
 import { fmt, toast, cn } from '../utils.js'
 
@@ -13,15 +13,15 @@ const CATS = [
 
 function GroupCard({ group, onClick }) {
   return (
-    <Card hover onClick={onClick} style={{ cursor:'pointer' }}>
-      <div style={{ width:48, height:48, borderRadius:14, background:(group.color || '#10b981')+'22',
-        display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, marginBottom:14 }}>
+    <Card hover onClick={onClick}>
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-6 bg-white/5 border border-white/5" 
+           style={{ color: group.color || '#10b981' }}>
         {group.icon || '👥'}
       </div>
-      <h3 style={{ fontWeight:700, fontSize:16, marginBottom:4 }}>{group.name}</h3>
-      <p style={{ fontSize:12, color:'#94a3b8', marginBottom:14 }}>{group.members.length} members · {group.category}</p>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-        paddingTop:14, borderTop:'1px solid var(--border,#f1f5f9)' }}>
+      <h3 className="text-lg font-bold text-white mb-1">{group.name}</h3>
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">{group.members.length} members · {group.category}</p>
+      
+      <div className="flex items-center justify-between pt-6 border-t border-white/5">
         <AvatarGroup members={group.members.map(m => m.user)} max={4} />
         <Badge variant={(group.myBalance || 0) >= 0 ? 'green' : 'red'}>
           {(group.myBalance || 0) >= 0 ? '+' : '−'}{fmt(Math.abs(group.myBalance || 0))}
@@ -53,27 +53,29 @@ function CreateGroupModal({ open, onClose, onCreated }) {
 
   return (
     <Modal open={open} onClose={onClose} title="Create Group">
-      <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <div className="flex flex-col gap-8">
         <Input label="Group Name" placeholder="e.g. Goa Trip 2024"
           value={name} onChange={e => setName(e.target.value)} />
 
         <div>
-          <label style={{ fontSize:13, fontWeight:500, color:'#475569', display:'block', marginBottom:8 }}>Category</label>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+          <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-4">Category</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {CATS.map(c => (
               <button key={c.v} onClick={() => setCat(c.v)}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 8px',
-                  borderRadius:12, border: cat===c.v ? '2px solid #10b981' : '1px solid #e2e8f0',
-                  background: cat===c.v ? '#ecfdf5' : 'transparent',
-                  cursor:'pointer', fontSize:22, gap:4, transition:'all .15s' }}>
-                {c.icon}
-                <span style={{ fontSize:11, color:'#64748b' }}>{c.label}</span>
+                className={cn(
+                  "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200",
+                  cat === c.v 
+                    ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400" 
+                    : "bg-white/5 border-white/5 text-slate-500 hover:bg-white/10"
+                )}>
+                <span className="text-2xl">{c.icon}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{c.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ display:'flex', gap:10, marginTop:4 }}>
+        <div className="flex gap-4 pt-4">
           <Button variant="secondary" full onClick={onClose}>Cancel</Button>
           <Button full loading={loading} onClick={submit}>Create Group</Button>
         </div>
@@ -111,19 +113,16 @@ export default function Groups() {
 
   return (
     <div>
-      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between',
-        marginBottom:28, gap:12, flexWrap:'wrap' }}>
-        <div>
-          <h1 style={{ fontSize:26, fontWeight:800, marginBottom:4 }}>Groups</h1>
-          <p style={{ color:'#94a3b8', fontSize:14 }}>Manage your expense groups</p>
-        </div>
-        <Button icon="+" onClick={() => setC(true)}>Create Group</Button>
-      </div>
+      <SectionHeader 
+        title="Groups" 
+        sub="Manage your shared expense workspaces"
+        action={<Button icon="+" onClick={() => setC(true)}>Create Group</Button>}
+      />
 
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'all' && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(270px,1fr))', gap:16 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups.length === 0 && !loading && (
             <div className="col-span-full">
               <EmptyState icon="👥" title="No Groups Yet" desc="Create a group to start splitting expenses with friends!" />

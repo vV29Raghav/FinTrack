@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Card, SectionHeader, Button, Badge } from '../components/ui.jsx'
 import { reports as apiReports, expenses as apiExpenses } from '../api.js'
 import { fmt, fmtK, fmtDate, catIcon, toast } from '../utils.js'
+import Papa from 'papaparse'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 // ── Chart Components ────────────────────────────────────────────────
 function BarChart({ data }) {
@@ -117,6 +120,56 @@ export default function Reports() {
     fetchData()
   }, [])
 
+  const exportCSV = () => {
+    if (expenses.length === 0) return toast.error('No data to export')
+    const data = expenses.map(e => ({
+      Description: e.description,
+      Group: e.groupId?.name || 'Private',
+      Date: fmtDate(e.date),
+      Category: e.category,
+      Amount: e.amount,
+      'Your Share': e.myShare || 0
+    }))
+    const csv = Papa.unparse(data)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `FinTrack_Expenses_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    toast.success('CSV Exported! 📊')
+  }
+
+  const exportPDF = () => {
+    if (expenses.length === 0) return toast.error('No data to export')
+    const doc = new jsPDF()
+    doc.setFontSize(20)
+    doc.text('FinTrack Expense Report', 14, 22)
+    doc.setFontSize(11)
+    doc.setTextColor(100)
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30)
+
+    const tableColumn = ["Description", "Group", "Date", "Category", "Amount", "Your Share"]
+    const tableRows = expenses.map(e => [
+      e.description,
+      e.groupId?.name || 'Private',
+      fmtDate(e.date),
+      e.category,
+      fmt(e.amount),
+      fmt(e.myShare || 0)
+    ])
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      headStyles: { fillStyle: '#10b981' }
+    })
+
+    doc.save(`FinTrack_Report_${new Date().toISOString().split('T')[0]}.pdf`)
+    toast.success('PDF Generated! 📄')
+  }
+
   if (loading) return <div className="py-20 text-center text-slate-400">Loading analytics...</div>
 
   return (
@@ -128,8 +181,8 @@ export default function Reports() {
           <p style={{ color:'#94a3b8', fontSize:14 }}>Spending analytics & insights</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <Button variant="secondary" size="sm" onClick={() => toast.success('Exporting CSV… 📊')}>Export CSV</Button>
-          <Button variant="secondary" size="sm" onClick={() => toast.success('Generating PDF… 📄')}>Export PDF</Button>
+          <Button variant="secondary" size="sm" onClick={exportCSV}>Export CSV</Button>
+          <Button variant="secondary" size="sm" onClick={exportPDF}>Export PDF</Button>
         </div>
       </div>
 

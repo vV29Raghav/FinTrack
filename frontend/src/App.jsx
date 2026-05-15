@@ -35,14 +35,12 @@ function AppShell() {
   }
 
   return (
-    <div style={{ display:'flex', minHeight:'100vh', background:'var(--bg-page,#f8fafc)' }}>
+    <div className="flex min-h-screen bg-slate-950 text-slate-100">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div style={{ flex:1, display:'flex', flexDirection:'column' }}
-           className="main-content">
+      <div className="flex-1 flex flex-col min-w-0 main-content">
         <Topbar onMenu={() => setSidebarOpen(o => !o)} />
-        <main style={{ flex:1 }}>
-          <div className="animate-fade-up" key={path}
-               style={{ padding:'28px 28px', maxWidth:'1400px', margin:'0 auto' }}>
+        <main className="flex-1 overflow-y-auto">
+          <div className="section-container py-10 animate-fade-up" key={path}>
             {renderPage()}
           </div>
         </main>

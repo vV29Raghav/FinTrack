@@ -1,25 +1,25 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { cn, toast as toastSys } from '../utils.js'
 
 // ── Button ────────────────────────────────────────────────────────────
 const BTN_V = {
-  primary:   'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:bg-emerald-700',
-  secondary: 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700',
-  ghost:     'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400',
-  danger:    'bg-red-50 dark:bg-red-950/30 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900',
-  outline:   'border border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:text-emerald-600 text-slate-600 dark:text-slate-300',
+  primary:   'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/10 active:scale-95',
+  secondary: 'bg-white/[0.05] hover:bg-white/[0.08] text-white border border-white/10 active:scale-95',
+  ghost:     'hover:bg-white/[0.05] text-slate-400 hover:text-white active:scale-95',
+  danger:    'bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95',
+  outline:   'border border-white/10 hover:border-emerald-500/50 hover:text-emerald-400 text-slate-300 active:scale-95',
 }
 const BTN_S = {
-  xs: 'px-2.5 py-1 text-xs rounded-lg gap-1',
-  sm: 'px-3 py-1.5 text-sm rounded-xl gap-1.5',
-  md: 'px-4 py-2 text-sm rounded-xl gap-2',
-  lg: 'px-5 py-2.5 text-base rounded-xl gap-2',
+  xs: 'h-8 px-3 text-[10px] uppercase tracking-widest rounded-lg gap-1.5',
+  sm: 'h-10 px-4 text-xs uppercase tracking-widest rounded-xl gap-2',
+  md: 'h-12 px-6 text-sm font-bold rounded-xl gap-2.5',
+  lg: 'h-14 px-8 text-base font-bold rounded-2xl gap-3',
 }
 export function Button({ children, variant='primary', size='md', className='', loading, icon, full, ...p }) {
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap',
         BTN_V[variant], BTN_S[size], full && 'w-full', className
       )}
       disabled={p.disabled || loading} {...p}
@@ -29,7 +29,7 @@ export function Button({ children, variant='primary', size='md', className='', l
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
           </svg>
-        : icon && <span className="text-base">{icon}</span>
+        : icon && <span className="text-lg">{icon}</span>
       }
       {children}
     </button>
@@ -39,23 +39,23 @@ export function Button({ children, variant='primary', size='md', className='', l
 // ── Input ─────────────────────────────────────────────────────────────
 export function Input({ label, error, wrapClass='', iconL, iconR, ...p }) {
   return (
-    <div className={cn('flex flex-col gap-1.5', wrapClass)}>
-      {label && <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>}
+    <div className={cn('flex flex-col gap-2', wrapClass)}>
+      {label && <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{label}</label>}
       <div className="relative">
-        {iconL && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{iconL}</span>}
+        {iconL && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">{iconL}</span>}
         <input
           className={cn(
-            'w-full rounded-xl border bg-slate-50 dark:bg-slate-800/70 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100',
-            'placeholder-slate-400 border-slate-200 dark:border-slate-700',
-            'focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition-all',
+            'w-full rounded-xl border bg-white/[0.02] px-4 py-3 text-sm text-white transition-all',
+            'placeholder-slate-600 border-white/10',
+            'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50',
             'disabled:opacity-60 disabled:cursor-not-allowed',
-            error && 'border-red-400 focus:ring-red-300/40',
-            iconL && 'pl-9', iconR && 'pr-9'
+            error && 'border-red-500/50 focus:ring-red-500/10',
+            iconL && 'pl-11', iconR && 'pr-11'
           )} {...p}
         />
-        {iconR && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{iconR}</span>}
+        {iconR && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">{iconR}</span>}
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{error}</p>}
     </div>
   )
 }
@@ -63,10 +63,10 @@ export function Input({ label, error, wrapClass='', iconL, iconR, ...p }) {
 // ── Select ────────────────────────────────────────────────────────────
 export function Select({ label, wrapClass='', children, ...p }) {
   return (
-    <div className={cn('flex flex-col gap-1.5', wrapClass)}>
-      {label && <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>}
+    <div className={cn('flex flex-col gap-2', wrapClass)}>
+      {label && <label className="text-xs font-bold uppercase tracking-widest text-slate-500">{label}</label>}
       <select
-        className="w-full rounded-xl border bg-slate-50 dark:bg-slate-800/70 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-400 transition-all cursor-pointer"
+        className="w-full rounded-xl border bg-white/[0.02] px-4 py-3 text-sm text-white border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all cursor-pointer appearance-none"
         {...p}
       >{children}</select>
     </div>
@@ -74,30 +74,75 @@ export function Select({ label, wrapClass='', children, ...p }) {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────
-export function Modal({ open, onClose, title, children, size='md' }) {
-  const sizes = { sm:'max-w-sm', md:'max-w-md', lg:'max-w-lg', xl:'max-w-2xl' }
+// ── Modal ─────────────────────────────────────────────────────────────
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  size = 'md'
+}) {
+  const sizes = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-2xl',
+  }
+
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
-    return () => { document.body.style.overflow = '' }
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [open])
-  useEffect(() => {
-    const fn = e => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', fn)
-    return () => window.removeEventListener('keydown', fn)
-  }, [onClose])
+
   if (!open) return null
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}/>
-      <div className={cn('relative w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/60 max-h-[90vh] overflow-y-auto animate-modal', sizes[size])}>
-        {title && (
-          <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
-            <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">✕</button>
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
+      
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      />
+
+      {/* Modal Wrapper */}
+      <div className="flex min-h-screen items-center justify-center p-4 md:p-8">
+        
+        {/* Modal */}
+        <div
+          className={cn(
+            'relative w-full rounded-[2.5rem] border border-white/10 bg-[#0a0f18] shadow-[0_30px_120px_rgba(0,0,0,0.8)]',
+            'max-h-[85vh] flex flex-col overflow-hidden',
+            sizes[size]
+          )}
+        >
+          
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-8 py-6 backdrop-blur-xl">
+            <h2 className="text-xl font-bold text-white">
+              {title || 'Modal'}
+            </h2>
+
+            <button
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-white/[0.05] hover:text-white"
+            >
+              ✕
+            </button>
           </div>
-        )}
-        <div className="p-6">{children}</div>
+
+          {/* Scrollable Content */}
+          <div className="overflow-y-auto flex-1 px-8 py-8 custom-scrollbar">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -109,9 +154,9 @@ export function Card({ children, className='', hover, onClick, pad=true }) {
     <div
       onClick={onClick}
       className={cn(
-        'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm',
-        pad && 'p-5',
-        hover && 'cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-emerald-400/50',
+        'bg-white/[0.02] rounded-3xl border border-white/10 backdrop-blur-sm',
+        pad && 'p-8',
+        hover && 'cursor-pointer transition-all duration-300 hover:bg-white/[0.04] hover:border-emerald-500/20 hover:-translate-y-1',
         onClick && 'cursor-pointer',
         className
       )}
@@ -121,14 +166,15 @@ export function Card({ children, className='', hover, onClick, pad=true }) {
 
 // ── StatCard ──────────────────────────────────────────────────────────
 export function StatCard({ label, value, sub, color='emerald', icon }) {
-  const border = { emerald:'border-l-emerald-400', red:'border-l-red-400', blue:'border-l-blue-400', amber:'border-l-amber-400' }[color]
+  const border = { emerald:'border-emerald-500/50', red:'border-red-500/50', blue:'border-blue-500/50', amber:'border-amber-500/50' }[color]
+  const glow = { emerald:'bg-emerald-500/5', red:'bg-red-500/5', blue:'bg-blue-500/5', amber:'bg-amber-500/5' }[color]
   return (
-    <div className={cn('bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-l-4 p-5 shadow-sm', border)}>
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+    <div className={cn('relative bg-white/[0.02] rounded-3xl border border-white/10 p-8 overflow-hidden', border, glow)}>
+      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
         {icon}<span>{label}</span>
       </div>
-      <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
-      {sub && <div className="text-xs text-slate-400 mt-1">{sub}</div>}
+      <div className="text-3xl font-black text-white">{value}</div>
+      {sub && <div className="text-xs font-bold text-slate-500 mt-2">{sub}</div>}
     </div>
   )
 }
@@ -139,8 +185,8 @@ export function Avatar({ name='', color, size='md', src, className='' }) {
   const ini = name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
   if (src) return <img src={src} alt={name} className={cn('rounded-full object-cover flex-shrink-0', sz, className)}/>
   return (
-    <div className={cn('rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0', sz, className)}
-      style={{ background: color || '#22a05a' }}>
+    <div className={cn('rounded-full flex items-center justify-center font-bold text-white flex-shrink-0', sz, className)}
+      style={{ background: color || '#10b981' }}>
       {ini}
     </div>
   )
@@ -149,14 +195,14 @@ export function Avatar({ name='', color, size='md', src, className='' }) {
 export function AvatarGroup({ members=[], max=4 }) {
   const vis = members.slice(0, max), rest = members.length - max
   return (
-    <div className="flex">
+    <div className="flex items-center">
       {vis.map((m,i) => (
-        <div key={m.id||i} className="-ml-2 first:ml-0" title={m.name}>
-          <Avatar name={m.name} color={m.color} size="xs" className="ring-2 ring-white dark:ring-slate-900"/>
+        <div key={m.id||i} className="-ml-3 first:ml-0" title={m.name}>
+          <Avatar name={m.name} color={m.color} size="sm" className="border-2 border-slate-950"/>
         </div>
       ))}
       {rest > 0 && (
-        <div className="-ml-2 w-6 h-6 rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[9px] font-semibold text-slate-600 dark:text-slate-300">+{rest}</div>
+        <div className="-ml-3 w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">+{rest}</div>
       )}
     </div>
   )
@@ -165,14 +211,14 @@ export function AvatarGroup({ members=[], max=4 }) {
 // ── Badge ─────────────────────────────────────────────────────────────
 export function Badge({ children, variant='gray', className='' }) {
   const V = {
-    green:  'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
-    red:    'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
-    amber:  'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400',
-    blue:   'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400',
-    purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400',
-    gray:   'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+    green:  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    red:    'bg-red-500/10 text-red-400 border-red-500/20',
+    amber:  'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    blue:   'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    gray:   'bg-white/5 text-slate-400 border-white/10',
   }
-  return <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', V[variant], className)}>{children}</span>
+  return <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border', V[variant], className)}>{children}</span>
 }
 
 // ── Toggle ────────────────────────────────────────────────────────────
@@ -180,7 +226,7 @@ export function Toggle({ checked, onChange }) {
   return (
     <button
       role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
-      className={cn('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1', checked ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700')}
+      className={cn('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20', checked ? 'bg-emerald-500' : 'bg-white/10')}
     >
       <span className={cn('inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200', checked ? 'translate-x-6' : 'translate-x-1')}/>
     </button>
@@ -190,14 +236,14 @@ export function Toggle({ checked, onChange }) {
 // ── Tabs ──────────────────────────────────────────────────────────────
 export function Tabs({ tabs, active, onChange }) {
   return (
-    <div className="flex border-b border-slate-200 dark:border-slate-800 mb-5">
+    <div className="flex border-b border-white/5 mb-8">
       {tabs.map(t => (
         <button key={t.id} onClick={() => onChange(t.id)}
-          className={cn('px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors duration-150',
-            active === t.id ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          className={cn('px-6 py-4 text-sm font-bold border-b-2 -mb-px transition-all duration-200',
+            active === t.id ? 'border-emerald-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'
           )}>
           {t.label}
-          {t.count !== undefined && <span className="ml-1.5 text-xs bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5">{t.count}</span>}
+          {t.count !== undefined && <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-white/5 rounded-md font-bold">{t.count}</span>}
         </button>
       ))}
     </div>
@@ -207,10 +253,10 @@ export function Tabs({ tabs, active, onChange }) {
 // ── EmptyState ────────────────────────────────────────────────────────
 export function EmptyState({ icon='📭', title, desc, action }) {
   return (
-    <div className="text-center py-14 px-4">
-      <div className="text-5xl mb-4">{icon}</div>
-      <h3 className="font-bold text-slate-900 dark:text-white mb-2">{title}</h3>
-      <p className="text-sm text-slate-400 max-w-xs mx-auto mb-5">{desc}</p>
+    <div className="text-center py-24 px-6 bg-white/[0.01] rounded-[3rem] border border-white/5 border-dashed">
+      <div className="text-6xl mb-6">{icon}</div>
+      <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
+      <p className="text-sm font-medium text-slate-500 max-w-xs mx-auto mb-8 leading-relaxed">{desc}</p>
       {action}
     </div>
   )
@@ -219,19 +265,14 @@ export function EmptyState({ icon='📭', title, desc, action }) {
 // ── SectionHeader ─────────────────────────────────────────────────────
 export function SectionHeader({ title, sub, action }) {
   return (
-    <div className="flex items-start justify-between mb-5">
+    <div className="flex items-end justify-between mb-8">
       <div>
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+        <h3 className="text-xl font-bold text-white">{title}</h3>
+        {sub && <p className="text-sm font-medium text-slate-500 mt-1">{sub}</p>}
       </div>
       {action}
     </div>
   )
-}
-
-// ── Skeleton ──────────────────────────────────────────────────────────
-export function Skeleton({ className='' }) {
-  return <div className={cn('rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse', className)}/>
 }
 
 // ── Toast Container ───────────────────────────────────────────────────
@@ -243,16 +284,16 @@ export function ToastContainer() {
   }, [])
   const icons = { success:'✅', error:'❌', info:'ℹ️' }
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3 pointer-events-none">
       {toasts.map(t => (
         <div key={t.id}
           className={cn(
-            'flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 animate-slide-in',
-            t.type === 'success' && 'border-l-4 border-l-emerald-400',
-            t.type === 'error' && 'border-l-4 border-l-red-400',
+            'flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-sm font-bold pointer-events-auto bg-slate-900 border border-white/10 animate-fade-up',
+            t.type === 'success' && 'border-l-4 border-l-emerald-500',
+            t.type === 'error' && 'border-l-4 border-l-red-500',
           )}>
-          <span>{icons[t.type]}</span>
-          <span className="text-slate-800 dark:text-slate-200">{t.msg}</span>
+          <span className="text-lg">{icons[t.type]}</span>
+          <span className="text-white">{t.msg}</span>
         </div>
       ))}
     </div>

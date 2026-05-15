@@ -1,25 +1,49 @@
 import { useState } from 'react'
 import { useRouter } from '../Router.jsx'
 import { useAuth } from '../AppContext.jsx'
-import { Button, Input } from '../components/ui.jsx'
+import { Button, Input, Card } from '../components/ui.jsx'
 import { toast } from '../utils.js'
 import { auth } from '../api.js'
+
+function Logo({ className = '' }) {
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20">
+        F
+      </div>
+      <span className="font-bold text-2xl tracking-tight text-white">FinTrack</span>
+    </div>
+  )
+}
 
 function AuthLayout({ title, sub, children }) {
   const { navigate } = useRouter()
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-10">
-        <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-black text-lg">S</div>
-          <span className="font-bold text-slate-900 dark:text-white">SplitWise Pro</span>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full" />
+      </div>
+
+      <div className="w-full max-w-[420px] z-10 animate-fade-up">
+        <div className="flex justify-center mb-12">
+          <Logo />
         </div>
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">{title}</h2>
-        <p className="text-sm text-slate-400 mb-7">{sub}</p>
-        {children}
-        <button onClick={() => navigate('/')} className="mt-5 w-full text-center text-sm text-slate-400 hover:text-emerald-500 transition-colors">
-          ← Back to Home
-        </button>
+
+        <Card className="p-10 border-white/5 bg-white/[0.02] shadow-2xl">
+          <h2 className="text-3xl font-black text-white mb-3 tracking-tight text-center">{title}</h2>
+          <p className="text-sm font-medium text-slate-500 mb-10 leading-relaxed text-center">{sub}</p>
+          
+          {children}
+          
+          <button 
+            onClick={() => navigate('/')} 
+            className="mt-10 w-full text-center text-xs font-black uppercase tracking-[0.2em] text-slate-600 hover:text-emerald-500 transition-colors"
+          >
+            ← Back to Home
+          </button>
+        </Card>
       </div>
     </div>
   )
@@ -28,8 +52,8 @@ function AuthLayout({ title, sub, children }) {
 export function LoginPage() {
   const { navigate } = useRouter()
   const { login, verifyEmail } = useAuth()
-  const [email, setEmail] = useState('alex@splitwise.pro')
-  const [password, setPassword] = useState('password123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   
   const [step, setStep] = useState('login') // 'login', 'verify', 'forgot', 'reset'
   const [otp, setOtp] = useState('')
@@ -86,18 +110,14 @@ export function LoginPage() {
     setLoading(false)
   }
 
-  const handleDemo = async () => {
-    toast.info('Demo login disabled. Please sign up or login with real credentials.')
-  }
-
   if (step === 'verify') {
     return (
-      <AuthLayout title="Verify your email" sub={`We've sent an OTP to ${email}`}>
-        <form onSubmit={submitVerify} className="space-y-4">
-          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+      <AuthLayout title="Verify Email" sub={`We've sent a 6-digit code to ${email}`}>
+        <form onSubmit={submitVerify} className="space-y-6">
+          <Input label="Verification Code" type="text" placeholder="000000"
             value={otp} onChange={e => setOtp(e.target.value)} required/>
-          <Button type="submit" full loading={loading} size="lg">Verify Email</Button>
-          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+          <Button type="submit" full loading={loading} size="lg">Verify & Continue</Button>
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm font-bold text-emerald-500 hover:text-emerald-400">
             Back to login
           </button>
         </form>
@@ -107,12 +127,12 @@ export function LoginPage() {
 
   if (step === 'forgot') {
     return (
-      <AuthLayout title="Forgot Password" sub="Enter your email to receive a reset OTP">
-        <form onSubmit={submitForgot} className="space-y-4">
-          <Input label="Email address" type="email" placeholder="alex@example.com"
+      <AuthLayout title="Forgot Password" sub="Enter your email to receive a recovery code">
+        <form onSubmit={submitForgot} className="space-y-6">
+          <Input label="Email Address" type="email" placeholder="alex@example.com"
             value={email} onChange={e => setEmail(e.target.value)} required/>
-          <Button type="submit" full loading={loading} size="lg">Send Reset OTP</Button>
-          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+          <Button type="submit" full loading={loading} size="lg">Send Code</Button>
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm font-bold text-emerald-500 hover:text-emerald-400">
             Back to login
           </button>
         </form>
@@ -122,14 +142,14 @@ export function LoginPage() {
 
   if (step === 'reset') {
     return (
-      <AuthLayout title="Reset Password" sub="Enter the OTP and your new password">
-        <form onSubmit={submitReset} className="space-y-4">
-          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+      <AuthLayout title="New Password" sub="Enter the code and your new password">
+        <form onSubmit={submitReset} className="space-y-6">
+          <Input label="Verification Code" type="text" placeholder="000000"
             value={otp} onChange={e => setOtp(e.target.value)} required/>
           <Input label="New Password" type="password" placeholder="••••••••"
             value={newPassword} onChange={e => setNewPassword(e.target.value)} required/>
           <Button type="submit" full loading={loading} size="lg">Reset Password</Button>
-          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm text-emerald-500 hover:underline mt-2">
+          <button type="button" onClick={() => setStep('login')} className="w-full text-center text-sm font-bold text-emerald-500 hover:text-emerald-400">
             Back to login
           </button>
         </form>
@@ -137,32 +157,24 @@ export function LoginPage() {
     )
   }
 
-  // default 'login' step
   return (
-    <AuthLayout title="Welcome back" sub="Sign in to your account to continue">
-      <button onClick={handleDemo}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-emerald-400 transition-all mb-4">
-        🚀 Continue as Demo User
-      </button>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"/>
-        <span className="text-xs text-slate-400">or sign in with email</span>
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"/>
-      </div>
-      <form onSubmit={submitLogin} className="space-y-4">
+    <AuthLayout title="Welcome back" sub="Log in to your account to continue managing your finances.">
+      <form onSubmit={submitLogin} className="space-y-6">
         <Input label="Email address" type="email" placeholder="alex@example.com"
           value={email} onChange={e => setEmail(e.target.value)} required/>
         <Input label="Password" type="password" placeholder="••••••••"
           value={password} onChange={e => setPassword(e.target.value)} required/>
         <div className="text-right">
-          <button type="button" onClick={() => setStep('forgot')} className="text-sm text-emerald-500 hover:underline">Forgot password?</button>
+          <button type="button" onClick={() => setStep('forgot')} className="text-sm font-bold text-emerald-500 hover:text-emerald-400">Forgot password?</button>
         </div>
         <Button type="submit" full loading={loading} size="lg">Sign In</Button>
       </form>
-      <p className="text-center text-sm text-slate-400 mt-5">
-        Don't have an account?{' '}
-        <button onClick={() => navigate('/signup')} className="text-emerald-500 hover:underline font-medium">Sign up free</button>
-      </p>
+      <div className="flex items-center gap-4 my-8">
+        <div className="flex-1 h-px bg-white/5"/>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">New to FinTrack?</span>
+        <div className="flex-1 h-px bg-white/5"/>
+      </div>
+      <Button variant="outline" full size="lg" onClick={() => navigate('/signup')}>Create Account</Button>
     </AuthLayout>
   )
 }
@@ -207,20 +219,20 @@ export function SignupPage() {
 
   if (step === 'verify') {
     return (
-      <AuthLayout title="Verify your email" sub={`We've sent an OTP to ${form.email}`}>
-        <form onSubmit={submitVerify} className="space-y-4">
-          <Input label="One-Time Password (OTP)" type="text" placeholder="Enter 6-digit OTP"
+      <AuthLayout title="Verify Email" sub={`A code has been sent to ${form.email}`}>
+        <form onSubmit={submitVerify} className="space-y-6">
+          <Input label="Verification Code" type="text" placeholder="000000"
             value={otp} onChange={e => setOtp(e.target.value)} required/>
-          <Button type="submit" full loading={loading} size="lg">Verify Email</Button>
+          <Button type="submit" full loading={loading} size="lg">Verify & Join</Button>
         </form>
       </AuthLayout>
     )
   }
 
   return (
-    <AuthLayout title="Create account" sub="Join 50,000+ users already saving time">
-      <form onSubmit={submitSignup} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+    <AuthLayout title="Create account" sub="Start managing shared and personal expenses with ease today.">
+      <form onSubmit={submitSignup} className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
           <Input label="First name" placeholder="Alex" value={form.firstName} onChange={e => set('firstName', e.target.value)} required/>
           <Input label="Last name"  placeholder="Johnson" value={form.lastName} onChange={e => set('lastName', e.target.value)}/>
         </div>
@@ -230,10 +242,12 @@ export function SignupPage() {
           value={form.password} onChange={e => set('password', e.target.value)} required/>
         <Button type="submit" full loading={loading} size="lg">Create Account</Button>
       </form>
-      <p className="text-center text-sm text-slate-400 mt-5">
-        Already have an account?{' '}
-        <button onClick={() => navigate('/login')} className="text-emerald-500 hover:underline font-medium">Sign in</button>
-      </p>
+      <div className="flex items-center gap-4 my-8">
+        <div className="flex-1 h-px bg-white/5"/>
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Already a member?</span>
+        <div className="flex-1 h-px bg-white/5"/>
+      </div>
+      <Button variant="outline" full size="lg" onClick={() => navigate('/login')}>Sign In</Button>
     </AuthLayout>
   )
 }

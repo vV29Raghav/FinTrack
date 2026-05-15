@@ -110,33 +110,34 @@ export function buildSplits({ amount, splitType, memberIds, exactAmounts, percen
     }
 
     case 'exact': {
-      const total = memberIds.reduce((s, id) => s + (exactAmounts[id] || 0), 0)
+      const total = memberIds.reduce((s, id) => s + Number(exactAmounts[id] || 0), 0)
       if (Math.abs(total - amount) > 0.01) throw new Error('Exact amounts must sum to total')
-      return memberIds.map(id => ({ user: id, amount: Math.round((exactAmounts[id] || 0) * 100) / 100 }))
+      return memberIds.map(id => ({ user: id, amount: Math.round(Number(exactAmounts[id] || 0) * 100) / 100 }))
     }
 
     case 'percentage': {
-      const sumPct = memberIds.reduce((s, id) => s + (percentages[id] || 0), 0)
+      const sumPct = memberIds.reduce((s, id) => s + Number(percentages[id] || 0), 0)
       if (Math.abs(sumPct - 100) > 0.01) throw new Error('Percentages must sum to 100')
       
       let distributed = 0
       const splits = memberIds.map((id, i) => {
+        const p = Number(percentages[id] || 0)
         const val = i === n - 1 
           ? Math.round((amount - distributed) * 100) / 100
-          : Math.round((percentages[id] || 0) / 100 * amount * 100) / 100
+          : Math.round((p / 100 * amount) * 100) / 100
         distributed += val
-        return { user: id, amount: val, percent: percentages[id] || 0 }
+        return { user: id, amount: val, percent: p }
       })
       return splits
     }
 
     case 'shares': {
-      const totalShares = memberIds.reduce((s, id) => s + (sharesMap[id] || 0), 0)
+      const totalShares = memberIds.reduce((s, id) => s + Number(sharesMap[id] || 0), 0)
       if (totalShares === 0) throw new Error('Total shares cannot be zero')
       
       let distributed = 0
       const splits = memberIds.map((id, i) => {
-        const s = sharesMap[id] || 0
+        const s = Number(sharesMap[id] || 0)
         const val = i === n - 1 && s > 0
           ? Math.round((amount - distributed) * 100) / 100
           : Math.round((s / totalShares * amount) * 100) / 100

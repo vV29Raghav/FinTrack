@@ -5,43 +5,38 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'sans-serif'],
-        display: ['Syne', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       colors: {
-        brand: {
-          50:  '#f0faf4',
-          100: '#d1f0de',
-          200: '#a4e0bc',
-          300: '#6dcb98',
-          400: '#3eba72',
-          500: '#22a05a',
-          600: '#187a44',
-          700: '#105530',
-          800: '#0a3a21',
-          900: '#062616',
+        emerald: {
+          50:  '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
         },
       },
       animation: {
         'fade-up': 'fadeUp 0.3s ease forwards',
-        'slide-in': 'slideIn 0.3s ease forwards',
-        'shimmer': 'shimmer 1.5s infinite',
+        'modal': 'modal 0.2s ease-out forwards',
       },
       keyframes: {
         fadeUp: {
           from: { opacity: '0', transform: 'translateY(10px)' },
           to:   { opacity: '1', transform: 'translateY(0)' },
         },
-        slideIn: {
-          from: { transform: 'translateX(100%)', opacity: '0' },
-          to:   { transform: 'translateX(0)',    opacity: '1' },
-        },
-        shimmer: {
-          from: { backgroundPosition: '200% 0' },
-          to:   { backgroundPosition: '-200% 0' },
+        modal: {
+          from: { opacity: '0', transform: 'scale(0.95) translateY(10px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
       },
     },
   },
-  plugins: [require('@tailwindcss/forms')],
+  plugins: [],
 }
